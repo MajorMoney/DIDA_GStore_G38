@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G36\\PuppetMaster\\PuppetMaster.csproj": {}
+    "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\PuppetMaster\\PuppetMaster.csproj": {}
   },
   "projects": {
-    "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G36\\PuppetMaster\\PuppetMaster.csproj": {
+    "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\PuppetMaster\\PuppetMaster.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G36\\PuppetMaster\\PuppetMaster.csproj",
+        "projectUniqueName": "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\PuppetMaster\\PuppetMaster.csproj",
         "projectName": "PuppetMaster",
-        "projectPath": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G36\\PuppetMaster\\PuppetMaster.csproj",
+        "projectPath": "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\PuppetMaster\\PuppetMaster.csproj",
         "packagesPath": "C:\\Users\\penun\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G36\\PuppetMaster\\obj\\",
+        "outputPath": "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\PuppetMaster\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\penun\\AppData\\Roaming\\NuGet\\NuGet.Config",

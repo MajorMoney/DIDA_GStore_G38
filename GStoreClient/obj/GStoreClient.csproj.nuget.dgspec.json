@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G36\\GStoreClient\\GStoreClient.csproj": {}
+    "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\GStoreClient\\GStoreClient.csproj": {}
   },
   "projects": {
-    "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G36\\GStoreClient\\GStoreClient.csproj": {
+    "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\GStoreClient\\GStoreClient.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G36\\GStoreClient\\GStoreClient.csproj",
+        "projectUniqueName": "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\GStoreClient\\GStoreClient.csproj",
         "projectName": "GStoreClient",
-        "projectPath": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G36\\GStoreClient\\GStoreClient.csproj",
+        "projectPath": "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\GStoreClient\\GStoreClient.csproj",
         "packagesPath": "C:\\Users\\penun\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G36\\GStoreClient\\obj\\",
+        "outputPath": "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\GStoreClient\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\penun\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -37,6 +37,26 @@
       },
       "frameworks": {
         "netcoreapp3.1": {
+          "dependencies": {
+            "Google.Protobuf": {
+              "target": "Package",
+              "version": "[3.13.0, )"
+            },
+            "Grpc.Core": {
+              "target": "Package",
+              "version": "[2.33.1, )"
+            },
+            "Grpc.Net.Client": {
+              "target": "Package",
+              "version": "[2.32.0, )"
+            },
+            "Grpc.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.33.1, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
