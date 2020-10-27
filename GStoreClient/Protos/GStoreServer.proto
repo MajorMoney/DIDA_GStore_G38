@@ -1,18 +1,16 @@
 ﻿syntax = "proto3";
 
-service AttachService {
-    rpc Attach (AttachRequest) returns (AttachReply);
+
+
+service ServerService {
+  rpc Attach (AttachRequest) returns (AttachReply);
 }
 
 message AttachRequest {
   string nick = 1;
   string url = 2;
 }
-
-message User {
-   string nick = 1;
-}//not used yet
-
 message AttachReply {
-	int port = 1;
+  bool ok = 1;
+  
 }

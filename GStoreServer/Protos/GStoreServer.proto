@@ -9,11 +9,6 @@ message AttachRequest {
   string url = 2;
 }
 message AttachReply {
-  int32 port = 1;
+  bool ok = 1;
   
 }
-/*repeated User users = 2;
-
-message User {
-   string nick = 1;
-}//not used yet

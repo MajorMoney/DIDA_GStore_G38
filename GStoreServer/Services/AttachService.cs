@@ -19,7 +19,7 @@ namespace GStoreServer.Services
 
             AttachReply reply = new AttachReply
             {
-                Port = ServerManager.GetPort()
+                Ok = true
             };
             return reply ;
         }
