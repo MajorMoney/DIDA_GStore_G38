@@ -10,8 +10,9 @@ message AttachRequest {
 }
 message AttachReply {
   int32 port = 1;
+  
 }
-
+/*repeated User users = 2;
 
 message User {
    string nick = 1;

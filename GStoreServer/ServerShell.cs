@@ -1,5 +1,7 @@
 ﻿using Grpc.Core;
+using GStoreServer.Services;
 using System;
+using System.Collections.Generic;
 
 namespace GStoreServer
 {
@@ -18,6 +20,7 @@ namespace GStoreServer
         private string hostname = "localhost";
         //private ServerPort port;
         private Server server;
+        
 
         public ServerShell(int partition,string[] services,int port)
         {
@@ -29,7 +32,7 @@ namespace GStoreServer
             ServerPort sp = new ServerPort(hostname, port, ServerCredentials.Insecure);
             server = new Server
             {
-                Services = { ChatServerService.BindService(new ServerService()) },//por finalizar
+                Services = { AttachServerService.BindService(new AttachService()) },//por finalizar
                 Ports = { sp }
             };
         }
