@@ -1,8 +1,6 @@
 ﻿syntax = "proto3";
 
-
-
-service ServerService {
+service AttachServerService {
   rpc Attach (AttachRequest) returns (AttachReply);
 }
 

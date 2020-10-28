@@ -16,7 +16,7 @@ namespace GStoreServer.Services
 
         private AttachReply Att(AttachRequest request)
         {
-
+            Console.WriteLine(request.Nick+" registered on port"+request.Url);
             AttachReply reply = new AttachReply
             {
                 Ok = true

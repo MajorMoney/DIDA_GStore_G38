@@ -22,19 +22,24 @@ namespace GStoreServer
         private Server server;
         
 
-        public ServerShell(int partition,string[] services,int port)
+        public ServerShell(string hostname, int port, int partition) //string[] services
         {
-            initializeServer(partition,services,port);
+            initializeServer( hostname,  port,  partition);
         }
 
-        private void initializeServer(int partition, string[] services, int port)
+        private void initializeServer(string hostname, int port, int partition)
         {
+            partitionID = partition;
             ServerPort sp = new ServerPort(hostname, port, ServerCredentials.Insecure);
             server = new Server
             {
-                Services = { AttachServerService.BindService(new AttachService()) },//por finalizar
+                Services = { AttachServerService.BindService(new AttachService()) },//Adicionar serviços
                 Ports = { sp }
             };
+            server.Start();
+            AppContext.SetSwitch(
+ "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            while (true) ;
         }
 
         public static void Attach()
@@ -45,6 +50,7 @@ namespace GStoreServer
 
         static void Main(string[] args)
         {
+            var ss = new ServerShell("localhost",1001,1);
             Console.WriteLine("Hello World!");
         }
     }
