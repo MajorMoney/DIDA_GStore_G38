@@ -1,12 +1,14 @@
 ﻿syntax = "proto3";
 
-service ChatClientService {
-  rpc RecvMsg (RecvMsgRequest) returns (RecvMsgReply);
+service AttachServerService {
+  rpc Attach (AttachRequest) returns (AttachReply);
 }
 
-message RecvMsgRequest {
-  string msg = 1;
+message AttachRequest {
+  string nick = 1;
+  string url = 2;
 }
-message RecvMsgReply {
-	bool ok = 1;
+message AttachReply {
+  bool ok = 1;
+  
 }

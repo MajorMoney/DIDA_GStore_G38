@@ -1,12 +1,16 @@
 ﻿syntax = "proto3";
 
-service ChatClientService {
-  rpc RecvMsg (RecvMsgRequest) returns (RecvMsgReply);
+
+
+service ClientService {
+  rpc Read (ReadRequest) returns (ReadReply);
 }
 
-message RecvMsgRequest {
-  string msg = 1;
+message ReadRequest {
+  int32 partitionID = 1;
+  int32 ObjectID = 2;
 }
-message RecvMsgReply {
-	bool ok = 1;
+message ReadReply {
+  string value = 1;
+  
 }
