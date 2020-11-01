@@ -5,7 +5,7 @@ using System.Text;
 namespace GStoreServer
 {
 
-    class ServerManager
+    class ServerManager/// classe desnecessária
     {
         private ServerShell[][] servers;
 

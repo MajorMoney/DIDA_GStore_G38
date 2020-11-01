@@ -1,0 +1,3 @@
+﻿number of servers :5
+number of partitions:5
+replication factor:3

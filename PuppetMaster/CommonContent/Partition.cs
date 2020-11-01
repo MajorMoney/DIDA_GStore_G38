@@ -17,10 +17,15 @@ namespace PuppetMaster.CommonContent
     public class Partition
     {
         private int ID;
-        private int[] serversID;
+        private List<int> serversID;
         private int masterID;
         private List<Objecto> objectos;
     }
 
+    public class AppMap
+    {
+        private List<int> partitionsID;
+        private List<int> serversID;
 
+    }
 }

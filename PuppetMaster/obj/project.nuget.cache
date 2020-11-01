@@ -1,8 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "vkJtNYMf+LRAZpxTGJ0dt58ndZq4ghhpUivxVbrpIWYj9Sdn1IrfrDdaZgyGfBcV1U1UuI89CI67TSF+GGLeGw==",
+  "dgSpecHash": "ZU6nCf40EhT374DmiRP/YmD+MjaJzNqfyfD1Gshw5SeSjGJjq0BYFSsEWKV3Rq3a29NrLxEzogiYHk8Lks9TQg==",
   "success": true,
   "projectFilePath": "C:\\Users\\penun\\source\\repos\\DIDA_GSTORE_G36\\PuppetMaster\\PuppetMaster.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\penun\\.nuget\\packages\\google.protobuf\\3.13.0\\google.protobuf.3.13.0.nupkg.sha512",
+    "C:\\Users\\penun\\.nuget\\packages\\grpc.core\\2.33.1\\grpc.core.2.33.1.nupkg.sha512",
+    "C:\\Users\\penun\\.nuget\\packages\\grpc.core.api\\2.33.1\\grpc.core.api.2.33.1.nupkg.sha512",
+    "C:\\Users\\penun\\.nuget\\packages\\grpc.tools\\2.33.1\\grpc.tools.2.33.1.nupkg.sha512",
+    "C:\\Users\\penun\\.nuget\\packages\\system.memory\\4.5.3\\system.memory.4.5.3.nupkg.sha512",
+    "C:\\Users\\penun\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\4.5.2\\system.runtime.compilerservices.unsafe.4.5.2.nupkg.sha512"
+  ],
   "logs": []
 }
