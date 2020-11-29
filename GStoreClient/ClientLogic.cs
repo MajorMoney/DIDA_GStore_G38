@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 
 namespace GStoreClient
 {
@@ -26,16 +27,18 @@ namespace GStoreClient
 
     public class ClientLogic
     {
-
-        private int ID;
-        private string hostname;
+        //Client Collections
         private Dictionary<int, List<int>> topologyMap;
         private Dictionary<int, string> serverUrls;
+        //Client other atributes
+        private int ID;
+        private string hostname;
+        private string puppet_hostname;//PM could be PCS
 
         private readonly AttachServerService.AttachServerServiceClient client;
         private Server server;
 
-        private string puppet_hostname;
+       
 
 
 
@@ -43,37 +46,48 @@ namespace GStoreClient
         {
             AppContext.SetSwitch(
                 "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
+            //Atribute initialization
             this.ID = id;
             hostname = client_hostname;
             this.puppet_hostname= puppet_hostname;
             topologyMap = new Dictionary<int, List<int>>();
-
-            this.setup();
+            serverUrls = new Dictionary<int, string>();
+            //
+            Thread setter = new Thread(new ThreadStart(setup));
+            setter.Start();
         }
 
 
         //setup gets the system topology
         public async void setup()
         {
+            Thread.Sleep(500);//mudar eventualmente
             //channel setup
-            using var channel = GrpcChannel.ForAddress(puppet_hostname);  
+            using var channel = GrpcChannel.ForAddress(puppet_hostname);
             var puppetMasterService = new PuppetMasterService.PuppetMasterServiceClient(channel);
+            Debug.WriteLine("Client:" + this.ID + " has Sent SetUP Request");
             //Send request
-            using var call = puppetMasterService.SetUp(new SetUpRequest() { Ok=true});
+            using var call = puppetMasterService.SetUp(new SetUpRequest() { Ok = true });
             //get response
             while (await call.ResponseStream.MoveNext())
             {
-                var map = call.ResponseStream.Current;
-                int[] servers = new int[map.ServerID.Count];
-                map.ServerID.CopyTo(servers, 0);
+                var objects = call.ResponseStream.Current;
                 var list = new List<int>();
-                list.AddRange(servers);
+                list.AddRange(objects.ServerInfo.Keys);
                 lock (this.topologyMap)
                 {
-                    topologyMap.Add(map.PartitionID, list);
+                    topologyMap.TryAdd(objects.PartitionID, list);
                 }
-            }         
+                lock (this.serverUrls)
+                {
+                    foreach (var o in objects.ServerInfo)
+                    {
+                    
+                        serverUrls.TryAdd(o.Key, o.Value);
+                    }
+                }
+            }
+            Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
         }
 
 

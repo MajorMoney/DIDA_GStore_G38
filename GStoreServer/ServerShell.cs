@@ -27,16 +27,19 @@ namespace GStoreServer
     {
         //private int port;
 
-        public int ID { get; }
-        private string hostname;
+       //Server Collections
         private Dictionary<int, List<int>> topologyMap;
         private Dictionary<int, Dictionary<int,string>> objects;
         private Dictionary<int,string> serverUrls;
+        //Server other atributes
+        public int ID { get; }
+        private string hostname;
+        private string puppet_hostname;//PM could be PCS
 
         //private ServerPort port;
         private Server server;        
 
-        private string puppet_hostname;
+       
 
 
 
@@ -44,23 +47,18 @@ namespace GStoreServer
         {
             AppContext.SetSwitch(
                 "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
+            //Atribute initialization
             ID = id;
             hostname = server_url;
             topologyMap = new Dictionary<int, List<int>>();
             objects = new Dictionary<int, Dictionary<int, string>>();
             this.puppet_hostname = puppet_hostname;
-            this.setup();
-            Debug.WriteLine("Sever:" + this.ID + "waiting");
-            Thread.Sleep(3000);
-            foreach (var o in objects)
-            {
-                Debug.WriteLine("Partition ID:"+o.Key);
-                foreach (var a in o.Value)
-                {
-                    Debug.WriteLine(" Object Key:" + a.Key+ " Object Value:" + a.Value);
-                }
-            }
+            serverUrls = new Dictionary<int, string>();
+            //
+
+            Thread setter = new Thread(new ThreadStart(setup));
+            setter.Start();
+           
             
             // "http://" + puppet_hostname + ":" + puppet_port.ToString();
             // initializeServer(server_hostname, server_port);---->precisa de ser alterado
@@ -70,36 +68,46 @@ namespace GStoreServer
         //setup gets the system topology
         public async void setup()
         {
+            Thread.Sleep(1000);//Mudar eventualmente
             //channel setup
             using var channel = GrpcChannel.ForAddress(puppet_hostname);
             var puppetMasterService = new PuppetMasterService.PuppetMasterServiceClient(channel);
             //Send request
             using var call = puppetMasterService.SetUp(new SetUpRequest() { Ok = true });
             //get response
+            Debug.WriteLine("Sever:" + this.ID + " has Sent SetUP Request");
             while (await call.ResponseStream.MoveNext())
             {
-                var map = call.ResponseStream.Current;
-                int[] servers = new int[map.ServerID.Count];
-                map.ServerID.CopyTo(servers, 0);
+                var objects = call.ResponseStream.Current;
                 var list = new List<int>();
-                list.AddRange(servers);
+                list.AddRange(objects.ServerInfo.Keys);
+                //Populate topologymap
                 lock (this.topologyMap) 
                 { 
-                topologyMap.Add(map.PartitionID, list);
+                topologyMap.TryAdd(objects.PartitionID,list);
+                }
+                //Populate servers urls
+                foreach (var o in objects.ServerInfo)
+                {
+                    lock (this.serverUrls)
+                    {
+                        serverUrls.TryAdd(o.Key,o.Value);
+                    }
                 }
             }
-            Debug.WriteLine("Sever:"+this.ID+" is here1");
+            Debug.WriteLine("Sever:"+this.ID+" Got its topologyMap");
             this.GetObjects(puppetMasterService);
         }
         //GetObjects will get the keys and values from the partitions replicated in this server
         private void GetObjects(PuppetMasterService.PuppetMasterServiceClient puppetMasterService)
         {
+            Debug.WriteLine("Sever:" + this.ID + " has Sent GetObjects Request");
             foreach (var p in topologyMap)
             {
                 if (p.Value.Contains(this.ID)) {
                     var call = puppetMasterService.GetObjectsAsync(new PopulateRequest() { PartitionID = p.Key });
                     var reply = call.ResponseAsync.Result;
-                    var dic = new Dictionary<int, string>();
+                    Dictionary<int, string> dic = new Dictionary<int, string>();
                     lock (this.objects)
                     {
                         foreach (var o in reply.Objectos)
@@ -110,12 +118,16 @@ namespace GStoreServer
                     }
                 }
             }
-            Debug.WriteLine("Sever:" + this.ID + " is here2");
+            foreach (var o in objects)
+            {
+                Debug.WriteLine("Server:"+this.ID+"-Partition ID:" + o.Key);
+                foreach (var a in o.Value)
+                {
+                    Debug.WriteLine(" Object Key:" + a.Key + " Object Value:" + a.Value);
+                }
+            }
         }
-        /*private void GetObjectsAux(int partitionID, PuppetMasterService.PuppetMasterServiceClient puppetMasterService)
-        {
-
-        }*/
+     
 
         private void initializeServer(string hostname, int port)
         {

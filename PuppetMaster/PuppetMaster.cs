@@ -25,9 +25,13 @@ namespace PuppetMaster
                new Dictionary<string, NodeService.NodeServiceClient>();
          private Dictionary<string, NodeService.NodeServiceClient> server_map =
                 new Dictionary<string, NodeService.NodeServiceClient>();*/
-        private Dictionary<int, string> clients=new Dictionary<int, string>();
-        private Dictionary<int, string> servers = new Dictionary<int, string>();
-        private Dictionary<int,Partition> partitions = new Dictionary<int,Partition>();
+
+
+        //PM Collections
+        private Dictionary<int, string> clients;
+        private Dictionary<int, string> servers;
+        private Dictionary<int,Partition> partitions;
+        //PM other atributes
         private readonly int repFactor=3;
         private string hostname;
         //private int client_count=0;
@@ -35,7 +39,12 @@ namespace PuppetMaster
             
         public PuppetMaster()
         {
+            //Atribute initialization
             hostname = "http://localhost:10001";
+            clients = new Dictionary<int, string>();
+            servers = new Dictionary<int, string>();
+            partitions = new Dictionary<int, Partition>();
+            //
             Thread starter = new Thread(new ThreadStart(Start));
             starter.Start();
             
@@ -47,9 +56,10 @@ namespace PuppetMaster
         }
         private void Start()
         {
-            //Start setup service
+            //
             AppContext.SetSwitch(
 "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            //Start setup service
             ServerPort sp = new ServerPort("localhost", 10001, ServerCredentials.Insecure);            
             Server server = new Server
             {
@@ -58,10 +68,13 @@ namespace PuppetMaster
             };
             server.Start();           
             Debug.WriteLine("Setup service listening...");
+
+            //Testing 'Main'
             this.Test();
 
         }
 
+        //Returns the objects keys and values from a given  partition 
         public Dictionary<int, string> GetObjects(int pID)
         {
             Dictionary<int, string> objects = new Dictionary<int, string>();            
@@ -72,20 +85,23 @@ namespace PuppetMaster
             return objects;
         }
        
+        //Returns a list with the IDs from all the existing partitions
         public List<int> GetPartitions()
         {
             var lista =new List<int>();
             lista.AddRange(partitions.Keys);
             return lista;
         }
+
+        //Returns the servers IDs and URLs where a given a partition is replicated
         public Dictionary<int,string> GetServersUrls(int pID)//node_type can be client or server
         {
-            Dictionary<int, string> servers= new Dictionary<int, string>();
+            Dictionary<int, string> temp= new Dictionary<int, string>();
             foreach (var serverID in partitions[pID].Servers)
-            {               
-                servers.Add(serverID,this.servers[serverID]);
+            {              
+                temp.Add(serverID,this.servers[serverID]);
             }
-            return servers;
+            return temp;
         }
 
         ////////Creation Commands////////
@@ -105,7 +121,8 @@ all outgoing communications from the server.*/
         {
             //BackgroundWorker bw = new System.ComponentModel.BackgroundWorker();
             ServerShell server = new ServerShell(ID,url,hostname,min_delay,max_delay,script);
-            servers.Add(ID,url);
+            servers.Add(ID, url);
+            Debug.WriteLine("Added server ID:"+ID+"--url--" + url);
 
 
 
@@ -186,8 +203,7 @@ before reading and executing the next command in the script file.*/
         {
             
             this.Partition(repFactor,1, new int[] { 1, 2, 3 });
-            this.Partition(repFactor,2, new int[] { 5, 5, 5 });
-            Wait(3000);
+            this.Partition(repFactor,2, new int[] { 1, 2, 3 });            
             this.Server(1, "http://localhost:8171", 1000, 3000, "script");
             this.Server(2, "http://localhost:8172", 1000, 3000, "script");
             this.Server(3, "http://localhost:8173", 1000, 3000, "script");
