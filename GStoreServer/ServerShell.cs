@@ -43,7 +43,7 @@ namespace GStoreServer
 
 
 
-        public ServerShell(int id,string server_url, string puppet_hostname,int min, int max, string script)
+        public ServerShell(int id,string server_url, string puppet_hostname,int min, int max)
         {
             AppContext.SetSwitch(
                 "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
