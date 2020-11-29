@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj": {}
+    "C:\\DAD\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj": {}
   },
   "projects": {
-    "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj": {
+    "C:\\DAD\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj",
+        "projectUniqueName": "C:\\DAD\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj",
         "projectName": "GStoreServer",
-        "projectPath": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj",
-        "packagesPath": "C:\\Users\\penun\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\GStoreServer\\obj\\",
+        "projectPath": "C:\\DAD\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj",
+        "packagesPath": "C:\\Users\\sksur\\.nuget\\packages\\",
+        "outputPath": "C:\\DAD\\DIDA_GStore_G38\\GStoreServer\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\penun\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\sksur\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -26,6 +26,7 @@
         },
         "frameworks": {
           "netcoreapp3.1": {
+            "targetAlias": "netcoreapp3.1",
             "projectReferences": {}
           }
         },
@@ -37,10 +38,15 @@
       },
       "frameworks": {
         "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
           "dependencies": {
             "Google.Protobuf": {
               "target": "Package",
-              "version": "[3.13.0, )"
+              "version": "[3.14.0, )"
+            },
+            "Grpc.AspNetCore.Server": {
+              "target": "Package",
+              "version": "[2.33.1, )"
             },
             "Grpc.Core": {
               "target": "Package",
@@ -52,7 +58,7 @@
             },
             "Grpc.Net.ClientFactory": {
               "target": "Package",
-              "version": "[2.23.2, )"
+              "version": "[2.33.1, )"
             },
             "Grpc.Tools": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -72,11 +78,14 @@
           "assetTargetFallback": true,
           "warn": true,
           "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.401\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.100\\RuntimeIdentifierGraph.json"
         }
       }
     }
