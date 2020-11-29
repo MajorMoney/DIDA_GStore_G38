@@ -42,7 +42,11 @@
           "dependencies": {
             "Google.Protobuf": {
               "target": "Package",
-              "version": "[3.13.0, )"
+              "version": "[3.14.0, )"
+            },
+            "Grpc.AspNetCore.Server": {
+              "target": "Package",
+              "version": "[2.33.1, )"
             },
             "Grpc.Core": {
               "target": "Package",
@@ -54,7 +58,7 @@
             },
             "Grpc.Net.ClientFactory": {
               "target": "Package",
-              "version": "[2.23.2, )"
+              "version": "[2.33.1, )"
             },
             "Grpc.Tools": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -74,6 +78,9 @@
           "assetTargetFallback": true,
           "warn": true,
           "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
