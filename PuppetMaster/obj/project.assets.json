@@ -698,19 +698,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\penun\\.nuget\\packages\\": {}
+    "C:\\Users\\sksur\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\PuppetMaster\\PuppetMaster.csproj",
+      "projectUniqueName": "C:\\Users\\sksur\\DAD\\DIDA_GStore_G38\\PuppetMaster\\PuppetMaster.csproj",
       "projectName": "PuppetMaster",
-      "projectPath": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\PuppetMaster\\PuppetMaster.csproj",
-      "packagesPath": "C:\\Users\\penun\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\PuppetMaster\\obj\\",
+      "projectPath": "C:\\Users\\sksur\\DAD\\DIDA_GStore_G38\\PuppetMaster\\PuppetMaster.csproj",
+      "packagesPath": "C:\\Users\\sksur\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\sksur\\DAD\\DIDA_GStore_G38\\PuppetMaster\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\penun\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\sksur\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -722,12 +722,13 @@
       },
       "frameworks": {
         "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
           "projectReferences": {
-            "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\GStoreClient\\GStoreClient.csproj": {
-              "projectPath": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\GStoreClient\\GStoreClient.csproj"
+            "C:\\Users\\sksur\\DAD\\DIDA_GStore_G38\\GStoreClient\\GStoreClient.csproj": {
+              "projectPath": "C:\\Users\\sksur\\DAD\\DIDA_GStore_G38\\GStoreClient\\GStoreClient.csproj"
             },
-            "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj": {
-              "projectPath": "C:\\Users\\penun\\source\\repos\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj"
+            "C:\\Users\\sksur\\DAD\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj": {
+              "projectPath": "C:\\Users\\sksur\\DAD\\DIDA_GStore_G38\\GStoreServer\\GStoreServer.csproj"
             }
           }
         }
@@ -740,6 +741,7 @@
     },
     "frameworks": {
       "netcoreapp3.1": {
+        "targetAlias": "netcoreapp3.1",
         "dependencies": {
           "Google.Protobuf": {
             "target": "Package",
@@ -785,7 +787,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.401\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.100\\RuntimeIdentifierGraph.json"
       }
     }
   }

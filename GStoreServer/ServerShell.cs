@@ -40,7 +40,7 @@ namespace GStoreServer
 
 
 
-        public ServerShell(int id,string server_url, string puppet_hostname,int min, int max, string script)
+        public ServerShell(int id,string server_url, string puppet_hostname,int min, int max)
         {
             AppContext.SetSwitch(
                 "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -78,14 +78,14 @@ namespace GStoreServer
             //get response
             while (await call.ResponseStream.MoveNext())
             {
-                var map = call.ResponseStream.Current;
-                int[] servers = new int[map.ServerID.Count];
-                map.ServerID.CopyTo(servers, 0);
+                var objects = call.ResponseStream.Current;
+               // int[] servers = new int[map.ServerID.Count];
+               // map.ServerID.CopyTo(servers, 0);
                 var list = new List<int>();
-                list.AddRange(servers);
+                //list.AddRange(servers);
                 lock (this.topologyMap) 
                 { 
-                topologyMap.Add(map.PartitionID, list);
+                //topologyMap.Add(map.PartitionID, list);
                 }
             }
             Debug.WriteLine("Sever:"+this.ID+" is here1");
