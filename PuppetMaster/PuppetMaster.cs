@@ -7,7 +7,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -27,75 +26,86 @@ namespace PuppetMaster
                new Dictionary<string, NodeService.NodeServiceClient>();
          private Dictionary<string, NodeService.NodeServiceClient> server_map =
                 new Dictionary<string, NodeService.NodeServiceClient>();*/
-        private Dictionary<int, string> clients = new Dictionary<int, string>();
-        private Dictionary<int, string> servers = new Dictionary<int, string>();
-        private Dictionary<int, Partition> partitions = new Dictionary<int, Partition>();
-        private readonly int repFactor = 3;
+
+
+        //PM Collections
+        private Dictionary<int, string> clients;
+        private Dictionary<int, string> servers;
+        private Dictionary<int,Partition> partitions;
+        private Dictionary<string, MethodInfo> methodList;
+        //PM other atributes
+        private readonly int repFactor=3;
         private string hostname;
         //private int client_count=0;
 
-        private Dictionary<string,MethodInfo> methodList;
-
+            
         public PuppetMaster()
         {
+            //Atribute initialization
             hostname = "http://localhost:10001";
+            clients = new Dictionary<int, string>();
+            servers = new Dictionary<int, string>();
+            partitions = new Dictionary<int, Partition>();
+            //
             Thread starter = new Thread(new ThreadStart(Start));
             starter.Start();
-        
+            
+            
+       
+            
 
-
-
+           
         }
-
-        
         private void Start()
         {
-            //Start setup service
+
+            //methodList = this.methodsToList();
+            //
             AppContext.SetSwitch(
 "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            ServerPort sp = new ServerPort("localhost", 10001, ServerCredentials.Insecure);
+            //Start setup service
+            ServerPort sp = new ServerPort("localhost", 10001, ServerCredentials.Insecure);            
             Server server = new Server
             {
                 Services = { PuppetMasterService.BindService(new SetUpService(this)) },
                 Ports = { sp }
             };
-            server.Start();
+            server.Start();           
             Debug.WriteLine("Setup service listening...");
 
-
-
-           methodList = this.methodsToList();
-
-
+            //Testing 'Main'
             this.Test();
-          
-            
+
         }
 
+        //Returns the objects keys and values from a given  partition 
         public Dictionary<int, string> GetObjects(int pID)
         {
-            Dictionary<int, string> objects = new Dictionary<int, string>();
+            Dictionary<int, string> objects = new Dictionary<int, string>();            
             foreach (var p in partitions[pID].objects)
             {
-                objects.Add(p.Key, p.Value);
+                objects.Add(p.Key,p.Value);
             }
             return objects;
         }
-
+       
+        //Returns a list with the IDs from all the existing partitions
         public List<int> GetPartitions()
         {
-            var lista = new List<int>();
+            var lista =new List<int>();
             lista.AddRange(partitions.Keys);
             return lista;
         }
-        public Dictionary<int, string> GetServersUrls(int pID)//node_type can be client or server
+
+        //Returns the servers IDs and URLs where a given a partition is replicated
+        public Dictionary<int,string> GetServersUrls(int pID)//node_type can be client or server
         {
-            Dictionary<int, string> servers = new Dictionary<int, string>();
+            Dictionary<int, string> temp= new Dictionary<int, string>();
             foreach (var serverID in partitions[pID].Servers)
-            {
-                servers.Add(serverID, this.servers[serverID]);
+            {              
+                temp.Add(serverID,this.servers[serverID]);
             }
-            return servers;
+            return temp;
         }
 
         ////////Creation Commands////////
@@ -114,8 +124,9 @@ all outgoing communications from the server.*/
         private async void Server(int ID, string url, int min_delay, int max_delay)
         {
             //BackgroundWorker bw = new System.ComponentModel.BackgroundWorker();
-            ServerShell server = new ServerShell(ID, url, hostname, min_delay, max_delay);
+            ServerShell server = new ServerShell(ID,url,hostname,min_delay,max_delay);
             servers.Add(ID, url);
+            Debug.WriteLine("Added server ID:"+ID+"--url--" + url);
 
 
 
@@ -126,7 +137,7 @@ all outgoing communications from the server.*/
 to store r replicas of partition partition name on the servers identified with the
 server ids server id 1 to serverd id r.*/
 
-        private async void Partition(int r, int partition_ID, params int[] servers_ids)
+        private async void Partition(int r,int partition_ID, params int[] servers_ids)
         {
             Partition partition = new Partition(r, partition_ID, servers_ids);
             partitions.Add(partition_ID, partition);
@@ -141,9 +152,9 @@ located in the same disk folder as the client executable.
         private async void Client(int ID, string url, string script_file)
         {
             //BackgroundWorker bw = new System.ComponentModel.BackgroundWorker();
-            ClientLogic cl = new ClientLogic(ID, url, hostname, script_file);
+            ClientLogic cl = new ClientLogic(ID,url,hostname,script_file);
             clients.Add(ID, url);
-
+            
 
         }
 
@@ -192,22 +203,24 @@ before reading and executing the next command in the script file.*/
         }
 
 
-
         private void Test()
         {
-         
-              //  this.readScript(@"Scripts\pm_script1");
-           
             
-            this.Partition(repFactor, 1, new int[] { 1, 2, 3 });
-            this.Partition(repFactor, 2, new int[] { 5, 5, 5 });
-            Wait(3000);
+            this.Partition(repFactor,1, new int[] { 1, 2, 3 });
+            this.Partition(repFactor,2, new int[] { 1, 2, 3 });            
             this.Server(1, "http://localhost:8171", 1000, 3000);
             this.Server(2, "http://localhost:8172", 1000, 3000);
             this.Server(3, "http://localhost:8173", 1000, 3000);
             this.Client(1, "http://localhost:8181", "script");
-            
+
+
         }
+
+
+
+
+
+
 
 
         /* SURICATA**/
@@ -217,12 +230,12 @@ before reading and executing the next command in the script file.*/
         private void readScript(String path)
         {
             //Current runtime directory -> PuppetMaster\bin\Debug\netcoreapp3.1 -> string path1 = Directory.GetCurrentDirectory();
-            
-            
-            string pathToFile = @"..\..\..\" + path ; //Go back to \PuppetMaster directory 
+
+
+            string pathToFile = @"..\..\..\" + path; //Go back to \PuppetMaster directory 
 
             Debug.WriteLine("Reading script in " + pathToFile);
-            
+
             try
             {
                 string[] lines = File.ReadAllLines(pathToFile);
@@ -237,24 +250,24 @@ before reading and executing the next command in the script file.*/
 
                 }
             }
-            catch(IOException e)
+            catch (IOException e)
             {
                 Debug.WriteLine("IO Exception while reading Script, check your path. Current read base path is /PuppetMaster ");
                 Debug.WriteLine(e);
             }
-           
+
         }
 
         private void scriptReaderHelper(string[] line)
         {
             string method = line[0];
-            if(methodList.ContainsKey(method))
+            if (methodList.ContainsKey(method))
             {
                 int i = 1;
 
-                MethodInfo m= methodList[method];
+                MethodInfo m = methodList[method];
                 ParameterInfo[] pars = m.GetParameters();
-                Debug.WriteLine("parameters length_"+pars.Length);
+                Debug.WriteLine("parameters length_" + pars.Length);
                 object[] method_args = new object[pars.Length];
 
                 foreach (ParameterInfo p in pars)
@@ -305,12 +318,12 @@ before reading and executing the next command in the script file.*/
                     }
                 }
 
-                    // m.Invoke(this,method_args);
-                    Debug.WriteLine("method : " + method + " args: " + method_args);
+                // m.Invoke(this,method_args);
+                Debug.WriteLine("method : " + method + " args: " + method_args);
 
                 foreach (object z in method_args)
                 {
-                    if (z !=null)
+                    if (z != null)
                     {
                         Debug.WriteLine("PARAM:" + i + " : " + z.GetType().ToString());
                     }
@@ -320,33 +333,33 @@ before reading and executing the next command in the script file.*/
 
             }
 
-                //string[] args = new string[line.Length-1];
-                //Array.Copy(line, 1, args, 0, line.Length - 1);
-                //string res = string.Join(";", args);
+            //string[] args = new string[line.Length-1];
+            //Array.Copy(line, 1, args, 0, line.Length - 1);
+            //string res = string.Join(";", args);
 
-                //Debug.WriteLine("[{0}]", string.Join(", ", args));
-
-
-            }
+            //Debug.WriteLine("[{0}]", string.Join(", ", args));
 
 
-        private Dictionary<string,MethodInfo> methodsToList()
+        }
+
+
+        private Dictionary<string, MethodInfo> methodsToList()
         {
 
-           Type myType = (typeof(PuppetMaster));
+            Type myType = (typeof(PuppetMaster));
             MethodInfo[] privateMethods = myType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
             MethodInfo[] publicMethods = myType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            Dictionary<string,MethodInfo>res = new Dictionary<string, MethodInfo>();
-            
-            foreach(MethodInfo m in privateMethods)
+            Dictionary<string, MethodInfo> res = new Dictionary<string, MethodInfo>();
+
+            foreach (MethodInfo m in privateMethods)
             {
                 res.Add(m.Name, m);
             }
-            foreach(MethodInfo m in publicMethods)
+            foreach (MethodInfo m in publicMethods)
             {
                 res.Add(m.Name, m);
             }
-            
+
             /**Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
             foreach (KeyValuePair<string, MethodInfo> kvp in res)
             {
@@ -355,6 +368,4 @@ before reading and executing the next command in the script file.*/
             return res;
         }
     }
-
- 
 }
