@@ -8,7 +8,12 @@ namespace GStoreServer.Services
 {
     class AttachService : AttachServerService.AttachServerServiceBase
     {
-        
+
+        public AttachService()
+        {
+
+        }
+
         public async override Task<AttachReply> Attach(AttachRequest request, ServerCallContext context)
         {
             return await Task.FromResult(Att(request));

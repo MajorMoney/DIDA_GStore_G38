@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30413.136
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GStoreServer", "GStoreServer\GStoreServer.csproj", "{36D0A67D-2CFD-4D09-BEA7-45E62E6718C9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GStoreServer", "GStoreServer\GStoreServer.csproj", "{36D0A67D-2CFD-4D09-BEA7-45E62E6718C9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuppetMaster", "PuppetMaster\PuppetMaster.csproj", "{62636DB4-C88E-42B2-A652-393D6FD5CD6F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PuppetMaster", "PuppetMaster\PuppetMaster.csproj", "{62636DB4-C88E-42B2-A652-393D6FD5CD6F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GStoreClient", "GStoreClient\GStoreClient.csproj", "{5E124F17-9613-441F-95BC-E99F7C407BD8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GStoreClient", "GStoreClient\GStoreClient.csproj", "{5E124F17-9613-441F-95BC-E99F7C407BD8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

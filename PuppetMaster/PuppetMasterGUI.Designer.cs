@@ -39,14 +39,15 @@
             this.InitBtn.TabIndex = 0;
             this.InitBtn.Text = "Init";
             this.InitBtn.UseVisualStyleBackColor = true;
+            this.InitBtn.Click += new System.EventHandler(this.InitBtn_Click);
             // 
-            // Form1
+            // PuppetMasterGUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.InitBtn);
-            this.Name = "Form1";
+            this.Name = "PuppetMasterGUI";
             this.Text = "Form1";
             this.ResumeLayout(false);
 
