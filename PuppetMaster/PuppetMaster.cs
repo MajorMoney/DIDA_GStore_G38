@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 
@@ -31,6 +32,7 @@ namespace PuppetMaster
         private Dictionary<int, string> clients;
         private Dictionary<int, string> servers;
         private Dictionary<int,Partition> partitions;
+        private Dictionary<string, MethodInfo> methodList;
         //PM other atributes
         private readonly int repFactor=3;
         private string hostname;
@@ -56,6 +58,8 @@ namespace PuppetMaster
         }
         private void Start()
         {
+
+            //methodList = this.methodsToList();
             //
             AppContext.SetSwitch(
 "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
@@ -117,10 +121,10 @@ for a random amount of time(specified in milliseconds) between min delay and max
 should not add any delay to incoming messages. Note that the delay should affect
 all outgoing communications from the server.*/
 
-        private async void Server(int ID, string url, int min_delay, int max_delay,string script)
+        private async void Server(int ID, string url, int min_delay, int max_delay)
         {
             //BackgroundWorker bw = new System.ComponentModel.BackgroundWorker();
-            ServerShell server = new ServerShell(ID,url,hostname,min_delay,max_delay,script);
+            ServerShell server = new ServerShell(ID,url,hostname,min_delay,max_delay);
             servers.Add(ID, url);
             Debug.WriteLine("Added server ID:"+ID+"--url--" + url);
 
@@ -204,12 +208,164 @@ before reading and executing the next command in the script file.*/
             
             this.Partition(repFactor,1, new int[] { 1, 2, 3 });
             this.Partition(repFactor,2, new int[] { 1, 2, 3 });            
-            this.Server(1, "http://localhost:8171", 1000, 3000, "script");
-            this.Server(2, "http://localhost:8172", 1000, 3000, "script");
-            this.Server(3, "http://localhost:8173", 1000, 3000, "script");
+            this.Server(1, "http://localhost:8171", 1000, 3000);
+            this.Server(2, "http://localhost:8172", 1000, 3000);
+            this.Server(3, "http://localhost:8173", 1000, 3000);
             this.Client(1, "http://localhost:8181", "script");
 
 
+        }
+
+
+
+
+
+
+
+
+        /* SURICATA**/
+
+        /* Example implementation:  this.readScript(@"Scripts\pm_script1");
+         */
+        private void readScript(String path)
+        {
+            //Current runtime directory -> PuppetMaster\bin\Debug\netcoreapp3.1 -> string path1 = Directory.GetCurrentDirectory();
+
+
+            string pathToFile = @"..\..\..\" + path; //Go back to \PuppetMaster directory 
+
+            Debug.WriteLine("Reading script in " + pathToFile);
+
+            try
+            {
+                string[] lines = File.ReadAllLines(pathToFile);
+
+                foreach (string line in lines)
+                {
+                    string[] args = line.Split(" ");
+                    Debug.WriteLine(line);
+
+                    scriptReaderHelper(args);
+
+
+                }
+            }
+            catch (IOException e)
+            {
+                Debug.WriteLine("IO Exception while reading Script, check your path. Current read base path is /PuppetMaster ");
+                Debug.WriteLine(e);
+            }
+
+        }
+
+        private void scriptReaderHelper(string[] line)
+        {
+            string method = line[0];
+            if (methodList.ContainsKey(method))
+            {
+                int i = 1;
+
+                MethodInfo m = methodList[method];
+                ParameterInfo[] pars = m.GetParameters();
+                Debug.WriteLine("parameters length_" + pars.Length);
+                object[] method_args = new object[pars.Length];
+
+                foreach (ParameterInfo p in pars)
+                {
+                    if (i < line.Length)
+                    {
+                        if (p.ParameterType.IsArray)   //is starting server array
+                        {
+
+                            List<int> servers = new List<int>();
+
+                            while (i < line.Length && line[i].StartsWith("s"))
+                            {
+                                servers.Add(Int32.Parse(line[i].Substring(1)));
+                                i++;
+                            }
+
+                            method_args[p.Position] = servers.ToArray();
+                            break;
+
+
+                        }
+                        else if (p.ParameterType == typeof(Int32))
+                        {
+                            int number;
+                            if (Int32.TryParse(line[i], out number))
+                            {
+                                method_args[p.Position] = number;
+                                i++;
+                            }
+                            else try
+                                {
+                                    number = Int32.Parse(line[i].Substring(1));
+                                    method_args[p.Position] = number;
+                                    i++;
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.WriteLine("Cannot convert this value: " + line[i]);
+                                }
+                        }
+                        else if (p.ParameterType == typeof(string))
+                        {
+                            Debug.WriteLine("String i: " + i);
+                            method_args[p.Position] = line[i];
+                            i++;
+                        }
+                    }
+                }
+
+                // m.Invoke(this,method_args);
+                Debug.WriteLine("method : " + method + " args: " + method_args);
+
+                foreach (object z in method_args)
+                {
+                    if (z != null)
+                    {
+                        Debug.WriteLine("PARAM:" + i + " : " + z.GetType().ToString());
+                    }
+                    else Debug.WriteLine("PARAM:" + i + " :  NULL");
+
+                }
+
+            }
+
+            //string[] args = new string[line.Length-1];
+            //Array.Copy(line, 1, args, 0, line.Length - 1);
+            //string res = string.Join(";", args);
+
+            //Debug.WriteLine("[{0}]", string.Join(", ", args));
+
+
+        }
+
+
+        private Dictionary<string, MethodInfo> methodsToList()
+        {
+
+            Type myType = (typeof(PuppetMaster));
+            MethodInfo[] privateMethods = myType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            MethodInfo[] publicMethods = myType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            Dictionary<string, MethodInfo> res = new Dictionary<string, MethodInfo>();
+
+            foreach (MethodInfo m in privateMethods)
+            {
+                res.Add(m.Name, m);
+            }
+            foreach (MethodInfo m in publicMethods)
+            {
+                res.Add(m.Name, m);
+            }
+
+            /**Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
+            foreach (KeyValuePair<string, MethodInfo> kvp in res)
+            {
+                Debug.WriteLine(string.Format("Key = {0}, Value = {1}", kvp.Key, kvp.Value.GetParameters().Length));
+            }**/
+            return res;
         }
     }
 }
