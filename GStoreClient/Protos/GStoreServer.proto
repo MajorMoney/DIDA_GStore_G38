@@ -2,13 +2,21 @@
 
 service AttachServerService {
   rpc Attach (AttachRequest) returns (AttachReply);
+    rpc Read (ReadRequest) returns (ReadReply);
 }
 
 message AttachRequest {
-  string nick = 1;
-  string url = 2;
+bool ok =1;
 }
 message AttachReply {
   bool ok = 1;
+}
+
+message ReadRequest {
+  int32 partitionID = 1;
+  int32 ObjectID = 2;
+}
+message ReadReply {
+  string value = 1;
   
 }

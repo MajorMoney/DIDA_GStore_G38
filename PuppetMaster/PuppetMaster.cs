@@ -10,7 +10,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using System.IO;
 using System.Threading;
 
 namespace PuppetMaster
@@ -74,8 +73,6 @@ namespace PuppetMaster
             };
             server.Start();           
             Debug.WriteLine("Setup service listening...");
-
-            methodList = this.methodsToList();
             //Testing 'Main'
             this.Test();
 
@@ -209,16 +206,13 @@ before reading and executing the next command in the script file.*/
         public void Test()
         {
             //methodsToList();
-           readScript(@"Scripts\pm_script1");
-            /**
+            //readScript(@"Scripts\pm_script1");
             this.Partition(repFactor,1, new int[] { 1, 2, 3 });
             this.Partition(repFactor,2, new int[] { 1, 2, 3 });            
             this.Server(1, "http://localhost:8171", 1000, 3000);
             this.Server(2, "http://localhost:8172", 1000, 3000);
             this.Server(3, "http://localhost:8173", 1000, 3000);
             this.Client(1, "http://localhost:8181", "script");
-            **/
-
         }
 
 

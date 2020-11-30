@@ -5,27 +5,29 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace GStoreClient
 {
 
-    public class ClientServicer : ClientService.ClientServiceBase
-    {
-        public ClientServicer()
-        {
+    /* public class ClientServicer : ClientService.ClientServiceBase
+     {
+         public ClientServicer()
+         {
 
-        }
-    }
-  /*  public class NodeServicer : NodeService.NodeServiceBase
-    {
-        public NodeServicer()
-        {
+         }
+     }
+     public class NodeServicer : NodeService.NodeServiceBase
+     {
+         public NodeServicer()
+         {
 
-        }
-    }*/
+         }
+     }*/
 
     public class ClientLogic
     {
@@ -38,10 +40,11 @@ namespace GStoreClient
         private string hostname;
         private string puppet_hostname;//PM could be PCS
 
-        private readonly AttachServerService.AttachServerServiceClient client;
-        private Server server;
+        //private readonly AttachServerService.AttachServerServiceClient client;
+        private string attachedServerUrl;
+        private GrpcChannel attachedServerChannel;
 
-       
+
 
 
 
@@ -55,26 +58,21 @@ namespace GStoreClient
             this.puppet_hostname= puppet_hostname;
             topologyMap = new Dictionary<int, List<int>>();
             serverUrls = new Dictionary<int, string>();
-            methodList = this.methodsToList();
+            attachedServerUrl = null;
+            //methodList = this.methodsToList();
 
             //
             Thread setter = new Thread(new ThreadStart(setup));
             setter.Start();
         }
-        public ClientLogic()
-        {
-            methodList = this.methodsToList();
-
-
-        }
-
+     
 
         //setup gets the system topology
         public async void setup()
         {
             Thread.Sleep(500);//mudar eventualmente
             //channel setup
-            using var channel = GrpcChannel.ForAddress(puppet_hostname);
+            var channel = GrpcChannel.ForAddress(puppet_hostname);
             var puppetMasterService = new PuppetMasterService.PuppetMasterServiceClient(channel);
             Debug.WriteLine("Client:" + this.ID + " has Sent SetUP Request");
             //Send request
@@ -92,40 +90,57 @@ namespace GStoreClient
                 lock (this.serverUrls)
                 {
                     foreach (var o in objects.ServerInfo)
-                    {
-                    
+                    {                    
                         serverUrls.TryAdd(o.Key, o.Value);
                     }
                 }
             }
             Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
+            ReadLogic(1,1,2);//harcoded test
         }
 
 
 
-        //atach, por mudar
-        public void Register(int client_port)
+     
+        public void TryAttach(string url)
         {
+            //atach, precisa de lógica          
+            if (String.IsNullOrEmpty(attachedServerUrl))
+            {
+                AttachApply(url);
+            }
+            else
+            {
+                if (!url.Contains(attachedServerUrl))
+                {
+                    Task.Run(() => AttachedServerShutdown(attachedServerChannel));
+                    AttachApply(url);
+                }
+                else
+                {
+                    Debug.WriteLine("alredy conected to " + url);
+                }
+            } 
+        }
 
-            // setup the client service
-            server = new Server
+        private void AttachApply(string url)
+        {
+            var channel = GrpcChannel.ForAddress(url);
+            var attachService = new AttachServerService.AttachServerServiceClient(channel);
+            Debug.WriteLine(channel.Target);
+            var reply = attachService.Attach(new AttachRequest()
             {
-                Services = { ClientService.BindService(new ClientServicer()) },
-                Ports = { new ServerPort(hostname, Convert.ToInt32(client_port), ServerCredentials.Insecure) }
-            };
-            server.Start();
-            AttachReply reply = client.Attach(new AttachRequest
-            {
-                Nick = "teste",
-                Url = "http://localhost:" + client_port //Hardcoded
+                Ok = true
             });
-            Console.WriteLine(reply.Ok);
+            attachedServerUrl = channel.Target;
+            attachedServerChannel = channel;
+            Debug.WriteLine("Client:"+this.ID+"now conected to " + url);
         }
 
         
-        public void ClientShutdown()
+        public void AttachedServerShutdown(GrpcChannel channel)
         {
-            server.ShutdownAsync().Wait();
+            channel.ShutdownAsync().Wait();
         }
         public void PuppetShutdown()
         {
@@ -135,17 +150,62 @@ namespace GStoreClient
 
         static void Main(string[] args)
         {
-            /* var ss = new ServerShell("localhost", 1001);
-             Console.WriteLine("Hello World!");*/
-            ClientLogic a = new ClientLogic();
-             a.readScript(@"Scripts\custom_test");
-            Debug.WriteLine("ola");
+            //var ss = new ServerShell("localhost", 1001);
+            //ClientLogic a = new ClientLogic();
+            //a.readScript(@"Scripts\custom_test");
+            //Debug.WriteLine("ola");
 
         }
-        private void read(int partition_id, int object_id,int server_id)
+        //problema de recursividade,infinite while loop, mudar eventualmente
+        private void ReadLogic(int partition_id, int object_id,int server_id)
         {
-            Debug.WriteLine("Read method : " + partition_id + " " + object_id+ " " + server_id);
+            
+                Debug.WriteLine("URL TEST-----<>http://" + attachedServerUrl);
+            if (!topologyMap.ContainsKey(partition_id))
+            {
+                //Partition does not exist
+                Debug.WriteLine("N/A");
+            }
+            else if(!String.IsNullOrEmpty(attachedServerUrl))
+            {
+                //Client alredy attached to a server
+                //Get Key by value, since the values(urls) are unique
+                int attachedServerID = serverUrls.FirstOrDefault(x => x.Value.Equals("http://" + attachedServerUrl)).Key;
+                if (topologyMap[partition_id].Contains(attachedServerID))
+                {
+                    Read(partition_id, object_id);
+                }
+                else
+                {
+                    TryAttach(serverUrls[server_id]);
+                    ReadLogic(partition_id, object_id, server_id);
+                }
+            }
+            else if(server_id==-1)
+            {
+                //Client not atached to a server and has no server ID as an attach reference
+                Debug.WriteLine("it was impossible to send the read Request");
+            }
+            else
+            {
+                //Client will try to attach to the given ID
+                TryAttach(serverUrls[server_id]);
+                ReadLogic(partition_id, object_id, server_id);
+            }            
         }
+
+        private void Read(int partition_id, int object_id)
+        {
+            
+            var attachService = new AttachServerService.AttachServerServiceClient(attachedServerChannel);
+            var reply = attachService.Read(new ReadRequest()
+            {
+                PartitionID=partition_id,
+                ObjectID=object_id
+            });
+            Debug.WriteLine("Client read:"+reply.Value);
+        }
+
         private void write(int partition_id, int object_id, string value)
         {
             Debug.WriteLine("Read method : "+partition_id+" " + object_id+" " + value);

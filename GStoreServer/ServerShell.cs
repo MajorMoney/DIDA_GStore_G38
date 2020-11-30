@@ -37,7 +37,7 @@ namespace GStoreServer
         private string puppet_hostname;//PM could be PCS
 
         //private ServerPort port;
-        private Server server;        
+        //private Server server;        
 
        
 
@@ -46,7 +46,7 @@ namespace GStoreServer
         public ServerShell(int id,string server_url, string puppet_hostname,int min, int max)
         {
             AppContext.SetSwitch(
-                "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+              "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             //Atribute initialization
             ID = id;
             hostname = server_url;
@@ -54,19 +54,19 @@ namespace GStoreServer
             objects = new Dictionary<int, Dictionary<int, string>>();
             this.puppet_hostname = puppet_hostname;
             serverUrls = new Dictionary<int, string>();
-            //
 
-            Thread setter = new Thread(new ThreadStart(setup));
-            setter.Start();
-           
-            
-            // "http://" + puppet_hostname + ":" + puppet_port.ToString();
-            // initializeServer(server_hostname, server_port);---->precisa de ser alterado
+            //StartServerService(); 
+            //
+            Thread starter = new Thread(new ThreadStart(StartServerService));
+            starter.Start();
+            Thread setter = new Thread(new ThreadStart(Setup));
+            setter.Start();                 
+      
         }
 
       
         //setup gets the system topology
-        public async void setup()
+        public async void Setup()
         {
             Thread.Sleep(1000);//Mudar eventualmente
             //channel setup
@@ -129,23 +129,25 @@ namespace GStoreServer
         }
      
 
-        private void initializeServer(string hostname, int port)
-        {
-
-            ServerPort sp = new ServerPort(hostname, port, ServerCredentials.Insecure);
-            server = new Server
+        private void StartServerService()
+        {          
+            string[] url = hostname.Split("//");
+            string[] urlv2 = url[1].Split(':');
+            ServerPort sp = new ServerPort(urlv2[0], Int32.Parse(urlv2[1]), ServerCredentials.Insecure);
+            Server server = new Server
             {
-                Services = { AttachServerService.BindService(new AttachService()) },//Adicionar serviços
+                Services = { AttachServerService.BindService(new AttachService(this)) },
                 Ports = { sp }
             };
             server.Start();
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            while (true) ;
+            Debug.WriteLine("Server" + this.ID + "-->serving on adress:");
+            Debug.WriteLine("host-   " + sp.Host + "  Port-  " + sp.Port);
+            //while (true) ;
         }
 
-        public static void Attach()
+        public string GetObjectValue(int pID,int objID)
         {
-
+            return objects[pID][objID];
         }
 
 
