@@ -362,3 +362,10 @@ MigrationBackup/
 
 *.json
 *.props
+
+
+GStoreServer/obj/Debug/netcoreapp3.1/GStoreServer.csprojAssemblyReference.cache
+PuppetMaster/obj/Debug/netcoreapp3.1/PuppetMaster.csprojAssemblyReference.cache
+PuppetMaster/obj/Debug/netcoreapp3.1/PuppetMaster.csprojAssemblyReference.cache
+PuppetMaster/obj/Debug/netcoreapp3.1/PuppetMaster.csprojAssemblyReference.cache
+PuppetMaster/obj/Debug/netcoreapp3.1/PuppetMaster.csprojAssemblyReference.cache

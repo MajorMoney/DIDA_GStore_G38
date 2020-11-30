@@ -6,24 +6,6 @@ using System.Text;
 namespace PuppetMaster
 
 {
-
-    /* public class Objecto
-     {
-         private UniqueKey key;
-         private string value { get; set; }
-     }
-     public class UniqueKey
-     {
-         private Tuple<int,int> keys;
-     }
-
-     public class AppMap
-     {
-         private List<int> partitionsID;
-         private List<int> serversID;
-
-     }
-     */
     public class Partition
     {
         public int Factor { get; set; }

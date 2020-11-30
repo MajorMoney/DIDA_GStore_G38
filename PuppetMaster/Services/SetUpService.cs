@@ -23,7 +23,7 @@ namespace PuppetMaster
             var partList = pm.GetPartitions();
             foreach (var i in partList) 
             {
-                Dictionary<int, string> servers = pm.GetServersUrls(i);
+                Dictionary<int, string> servers = pm.GetServersUrls(i);               
                 var reply = new PartitionMap();
                 reply.PartitionID = i;
                 reply.ServerInfo.Add(servers);
