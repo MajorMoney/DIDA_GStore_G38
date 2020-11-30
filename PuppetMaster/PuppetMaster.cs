@@ -74,6 +74,7 @@ namespace PuppetMaster
             server.Start();           
             Debug.WriteLine("Setup service listening...");
 
+            methodList = this.methodsToList();
             //Testing 'Main'
             this.Test();
 
