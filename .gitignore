@@ -359,5 +359,6 @@ MigrationBackup/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio
 *.cache
-*.cache
-*.cache
+*.json
+*.props
+
