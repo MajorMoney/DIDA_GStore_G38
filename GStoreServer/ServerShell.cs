@@ -123,7 +123,7 @@ namespace GStoreServer
                 Debug.WriteLine("Server:"+this.ID+"-Partition ID:" + o.Key);
                 foreach (var a in o.Value)
                 {
-                    Debug.WriteLine(" Object Key:" + a.Key + " Object Value:" + a.Value);
+                    Debug.WriteLine("Server:" + this.ID + " Object Key:" + a.Key + " Object Value:" + a.Value);
                 }
             }
         }
