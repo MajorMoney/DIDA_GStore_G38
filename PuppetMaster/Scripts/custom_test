@@ -1,0 +1,5 @@
+begin-repeat 3
+write p2 o$i "p2-o$i-v1"
+wait 1000
+end-repeat
+write p2 o3 "cona"
