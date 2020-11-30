@@ -8,10 +8,10 @@ namespace GStoreServer.Services
 {
     class AttachService : AttachServerService.AttachServerServiceBase
     {
-
-        public AttachService()
+        private ServerShell shell;
+        public AttachService(ServerShell shell)
         {
-
+            this.shell = shell;
         }
 
         public async override Task<AttachReply> Attach(AttachRequest request, ServerCallContext context)
@@ -21,12 +21,26 @@ namespace GStoreServer.Services
 
         private AttachReply Att(AttachRequest request)
         {
-            Console.WriteLine(request.Nick+" registered on port"+request.Url);
             AttachReply reply = new AttachReply
             {
                 Ok = true
             };
             return reply ;
+        }
+
+        public async override Task<ReadReply> Read(ReadRequest request, ServerCallContext context)
+        {
+            return await Task.FromResult((Rdd(request)));
+        }
+
+        private ReadReply Rdd(ReadRequest request)
+        {
+            string value = shell.GetObjectValue(request.PartitionID,request.ObjectID);
+            ReadReply reply = new ReadReply
+            {
+                Value = value
+            };
+            return reply;
         }
     }
 }
