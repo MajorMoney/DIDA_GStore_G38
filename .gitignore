@@ -359,6 +359,11 @@ MigrationBackup/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio
 *.cache
+
+*.json
+*.props
+
+
 GStoreServer/obj/Debug/netcoreapp3.1/GStoreServer.csprojAssemblyReference.cache
 PuppetMaster/obj/Debug/netcoreapp3.1/PuppetMaster.csprojAssemblyReference.cache
 PuppetMaster/obj/Debug/netcoreapp3.1/PuppetMaster.csprojAssemblyReference.cache
