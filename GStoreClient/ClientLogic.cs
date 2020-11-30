@@ -138,7 +138,7 @@ namespace GStoreClient
             /* var ss = new ServerShell("localhost", 1001);
              Console.WriteLine("Hello World!");*/
             ClientLogic a = new ClientLogic();
-             a.readScript(@"Scripts\client_script3");
+             a.readScript(@"Scripts\custom_test");
             Debug.WriteLine("ola");
 
         }

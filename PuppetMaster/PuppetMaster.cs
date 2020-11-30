@@ -112,7 +112,7 @@ namespace PuppetMaster
 
         ////////Creation Commands////////
 
-        private async void ReplicationFactor(int r)// configures the system to replicate partitions on r servers
+        public async void ReplicationFactor(int r)// configures the system to replicate partitions on r servers
         {
 
         }
@@ -123,7 +123,7 @@ for a random amount of time(specified in milliseconds) between min delay and max
 should not add any delay to incoming messages. Note that the delay should affect
 all outgoing communications from the server.*/
 
-        private async void Server(int ID, string url, int min_delay, int max_delay)
+        public async void Server(int ID, string url, int min_delay, int max_delay)
         {
             //BackgroundWorker bw = new System.ComponentModel.BackgroundWorker();
             ServerShell server = new ServerShell(ID,url,hostname,min_delay,max_delay);
@@ -139,7 +139,7 @@ all outgoing communications from the server.*/
 to store r replicas of partition partition name on the servers identified with the
 server ids server id 1 to serverd id r.*/
 
-        private async void Partition(int r,int partition_ID, params int[] servers_ids)
+        public async void Partition(int r,int partition_ID, params int[] servers_ids)
         {
             Partition partition = new Partition(r, partition_ID, servers_ids);
             partitions.Add(partition_ID, partition);
@@ -151,7 +151,7 @@ commands in the script file script file. It can be assumed that the script file 
 located in the same disk folder as the client executable.
 */
 
-        private async void Client(int ID, string url, string script_file)
+        public async void Client(int ID, string url, string script_file)
         {
             //BackgroundWorker bw = new System.ComponentModel.BackgroundWorker();
             ClientLogic cl = new ClientLogic(ID,url,hostname,script_file);
@@ -165,7 +165,7 @@ The status command should present brief information about the state of the syste
 can be printed on each nodes’ console and does not need to be centralised at the
 PuppetMaster.*/
 
-        private async void Status()
+        public async void Status()
         {
 
         }
@@ -174,7 +174,7 @@ PuppetMaster.*/
 
         ////////Debug Commands////////
 
-        private async void Crash(int server_id)// This command is used to force a process to crash.
+        public async void Crash(int server_id)// This command is used to force a process to crash.
         {
 
         }
@@ -184,7 +184,7 @@ receiving a freeze, the process continues receiving messages but stops processin
 them until the PuppetMaster “unfreezes” it.
 */
 
-        private async void Freeze(int server_id)
+        public async void Freeze(int server_id)
         {
 
         }
@@ -192,29 +192,31 @@ them until the PuppetMaster “unfreezes” it.
         /* This command is used to put a process back to normal operation. Pending messages that were received while the process was frozen, should be
 processed when this command is received.*/
 
-        private async void Unfreeze(int server_id)
+        public async void Unfreeze(int server_id)
         {
 
         }
 
         /*This command instructs the PuppetMaster to sleep for x milliseconds
 before reading and executing the next command in the script file.*/
-        private void Wait(int x_ms)
+        public void Wait(int x_ms)
         {
 
         }
 
 
-        private void Test()
+        public void Test()
         {
-            
+            //methodsToList();
+           readScript(@"Scripts\pm_script1");
+            /**
             this.Partition(repFactor,1, new int[] { 1, 2, 3 });
             this.Partition(repFactor,2, new int[] { 1, 2, 3 });            
             this.Server(1, "http://localhost:8171", 1000, 3000);
             this.Server(2, "http://localhost:8172", 1000, 3000);
             this.Server(3, "http://localhost:8173", 1000, 3000);
             this.Client(1, "http://localhost:8181", "script");
-
+            **/
 
         }
 
@@ -229,7 +231,7 @@ before reading and executing the next command in the script file.*/
 
         /* Example implementation:  this.readScript(@"Scripts\pm_script1");
          */
-        private void readScript(String path)
+        public void readScript(String path)
         {
             //Current runtime directory -> PuppetMaster\bin\Debug\netcoreapp3.1 -> string path1 = Directory.GetCurrentDirectory();
 
@@ -260,7 +262,7 @@ before reading and executing the next command in the script file.*/
 
         }
 
-        private void scriptReaderHelper(string[] line)
+        public void scriptReaderHelper(string[] line)
         {
             string method = line[0];
             if (methodList.ContainsKey(method))
@@ -362,11 +364,11 @@ before reading and executing the next command in the script file.*/
                 res.Add(m.Name, m);
             }
 
-            /**Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
+            Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
             foreach (KeyValuePair<string, MethodInfo> kvp in res)
             {
                 Debug.WriteLine(string.Format("Key = {0}, Value = {1}", kvp.Key, kvp.Value.GetParameters().Length));
-            }**/
+            }
             return res;
         }
     }
