@@ -2,10 +2,9 @@ begin-repeat 3
 write p2 o$i "p2-o$i-v1"
 wait 1000
 end-repeat
-write p2 o3 "cona"
 write p1 o1 "p1-o1-v1"
-read p1 o1 -1
-read p2 o1 -1
+readlogic p1 o1 -1
+readlogic p2 o1 -1
 listServer s1
 wait 3000
 begin-repeat 5
@@ -15,23 +14,23 @@ end-repeat
 write p2 o6 "p2-o6-v1"
 listGlobal
 write p2 o2 "p2-o2-v2"
-read p2 o5 -1
-read p2 o6 -1
-read p1 o1 s3
+readlogic p2 o5 -1
+readlogic p2 o6 -1
+readlogic p1 o1 s3
 listServer s1
 listServer s3
 wait 5000
 listGlobal
 write p1 o2 "p1-o2-v1"
-read p2 o5 -1
-read p2 o6 -1
-read p1 o2 s3
+readlogic p2 o5 -1
+readlogic p2 o6 -1
+readlogic p1 o2 s3
 listServer s1
 listServer s3
 listGlobal
 write p1 o1 "p1-o1-v1"
-read p1 o1 -1
-read p2 o1 -1
+readlogic p1 o1 -1
+readlogic p2 o1 -1
 listServer s1
 wait 3000
 begin-repeat 5
