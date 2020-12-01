@@ -37,7 +37,7 @@ namespace GStoreServer
         private string puppet_hostname;//PM could be PCS
 
         //private ServerPort port;
-        private Server server;        
+        //private Server server;        
 
        
 
@@ -46,7 +46,7 @@ namespace GStoreServer
         public ServerShell(int id,string server_url, string puppet_hostname,int min, int max)
         {
             AppContext.SetSwitch(
-                "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+              "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             //Atribute initialization
             ID = id;
             hostname = server_url;
@@ -54,19 +54,19 @@ namespace GStoreServer
             objects = new Dictionary<int, Dictionary<int, string>>();
             this.puppet_hostname = puppet_hostname;
             serverUrls = new Dictionary<int, string>();
-            //
 
-            Thread setter = new Thread(new ThreadStart(setup));
-            setter.Start();
-           
-            
-            // "http://" + puppet_hostname + ":" + puppet_port.ToString();
-            // initializeServer(server_hostname, server_port);---->precisa de ser alterado
+            //StartServerService(); 
+            //
+            Thread starter = new Thread(new ThreadStart(StartServerService));
+            starter.Start();
+            Thread setter = new Thread(new ThreadStart(Setup));
+            setter.Start();                 
+      
         }
 
       
         //setup gets the system topology
-        public async void setup()
+        public async void Setup()
         {
             Thread.Sleep(1000);//Mudar eventualmente
             //channel setup
@@ -75,7 +75,7 @@ namespace GStoreServer
             //Send request
             using var call = puppetMasterService.SetUp(new SetUpRequest() { Ok = true });
             //get response
-            Debug.WriteLine("Sever:" + this.ID + " has Sent SetUP Request");
+            //Debug.WriteLine("Sever:" + this.ID + " has Sent SetUP Request");
             while (await call.ResponseStream.MoveNext())
             {
                 var objects = call.ResponseStream.Current;
@@ -95,13 +95,13 @@ namespace GStoreServer
                     }
                 }
             }
-            Debug.WriteLine("Sever:"+this.ID+" Got its topologyMap");
+            //Debug.WriteLine("Sever:"+this.ID+" Got its topologyMap");
             this.GetObjects(puppetMasterService);
         }
         //GetObjects will get the keys and values from the partitions replicated in this server
         private void GetObjects(PuppetMasterService.PuppetMasterServiceClient puppetMasterService)
         {
-            Debug.WriteLine("Sever:" + this.ID + " has Sent GetObjects Request");
+            //Debug.WriteLine("Sever:" + this.ID + " has Sent GetObjects Request");
             foreach (var p in topologyMap)
             {
                 if (p.Value.Contains(this.ID)) {
@@ -118,34 +118,36 @@ namespace GStoreServer
                     }
                 }
             }
-            foreach (var o in objects)
+            /*foreach (var o in objects) //print for testing serves
             {
                 Debug.WriteLine("Server:"+this.ID+"-Partition ID:" + o.Key);
                 foreach (var a in o.Value)
                 {
-                    Debug.WriteLine(" Object Key:" + a.Key + " Object Value:" + a.Value);
+                    Debug.WriteLine("Server:" + this.ID + " Object Key:" + a.Key + " Object Value:" + a.Value);
                 }
-            }
+            }*/
         }
      
 
-        private void initializeServer(string hostname, int port)
-        {
-
-            ServerPort sp = new ServerPort(hostname, port, ServerCredentials.Insecure);
-            server = new Server
+        private void StartServerService()
+        {          
+            string[] url = hostname.Split("//");
+            string[] urlv2 = url[1].Split(':');
+            ServerPort sp = new ServerPort(urlv2[0], Int32.Parse(urlv2[1]), ServerCredentials.Insecure);
+            Server server = new Server
             {
-                Services = { AttachServerService.BindService(new AttachService()) },//Adicionar serviços
+                Services = { AttachServerService.BindService(new AttachService(this)) },
                 Ports = { sp }
             };
             server.Start();
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            while (true) ;
+            Debug.WriteLine("Server" + this.ID + "-->serving on adress:");
+            Debug.WriteLine("host-   " + sp.Host + "  Port-  " + sp.Port);
+            //while (true) ;
         }
 
-        public static void Attach()
+        public string GetObjectValue(int pID,int objID)
         {
-
+            return objects[pID][objID];
         }
 
 
