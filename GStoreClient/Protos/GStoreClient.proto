@@ -1,6 +1,8 @@
 ﻿syntax = "proto3";
 
 
+option csharp_namespace = "GStoreClient_client";
+
 
 service ClientService {
   rpc Read (ReadRequest) returns (ReadReply);

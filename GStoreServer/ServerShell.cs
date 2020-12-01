@@ -1,6 +1,7 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
 using GStoreServer.Services;
+using GStoreServer_server;
 using PuppetMaster;
 using System;
 using System.Collections.Generic;

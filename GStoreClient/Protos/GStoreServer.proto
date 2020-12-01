@@ -1,5 +1,7 @@
 ﻿syntax = "proto3";
 
+option csharp_namespace = "GStoreClient_server";
+
 service AttachServerService {
   rpc Attach (AttachRequest) returns (AttachReply);
     rpc Read (ReadRequest) returns (ReadReply);
