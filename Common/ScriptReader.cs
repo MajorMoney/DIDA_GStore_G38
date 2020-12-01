@@ -17,7 +17,7 @@ namespace Common
         public ScriptReader()
         {
             MethodBase method = new StackFrame(1, false).GetMethod();
-            Debug.WriteLine(method.ToString());
+          //  Debug.WriteLine(method.ToString());
             caller_type = method.DeclaringType;
             methodList = methodsToList();
             parseDirectory();
@@ -30,21 +30,22 @@ namespace Common
             if (_type.Contains("client"))
             {
                 pathToDir = @"..\..\..\..\GStoreClient\";
-                Debug.WriteLine(pathToDir);
             }
             else if (_type.Contains("puppetmaster"))
             {
                 pathToDir = @"..\..\..\..\PuppetMaster\";
-                Debug.WriteLine(pathToDir);
             }
             if (_type.Contains("server"))
             {
                 pathToDir = @"..\..\..\..\GStoreServer\";
-                Debug.WriteLine(pathToDir);
             }
+            //Debug.WriteLine(pathToDir);
+
         }
-        public void readScript(String path )
+        public List<Tuple<MethodInfo, object[]>> readScript(String path )
         {
+            List<Tuple<MethodInfo, object[]>> queue = new List<Tuple<MethodInfo, object[]>>();
+
             //Current runtime directory -> PuppetMaster\bin\Debug\netcoreapp3.1 -> string path1 = Directory.GetCurrentDirectory();
 
 
@@ -56,41 +57,107 @@ namespace Common
             {
                 string[] lines = File.ReadAllLines(pathToScript);
 
-                foreach (string line in lines)
+                for (int num_line = 0; num_line < lines.Length; num_line++)
                 {
-                    string[] args = line.Split(" ");
-                    Debug.WriteLine(line);
+                    string[] args = lines[num_line].Split(" ");
+             /**       Debug.WriteLine(lines[num_line]);**/
 
-                    scriptReaderHelper(args);
 
+                    if (args[0].Equals("begin-repeat"))
+                    {
+
+                        num_line++;
+                        int num;
+                        if (Int32.TryParse(args[1], out num))
+                        {
+                            int i = 0;
+                            int z = 0;
+                            int last_line = 0;
+                            while (i < num)
+                            {
+                                /**Debug.WriteLine("Iteração: i=" + i + "  z=" + z + "  last_line=" + last_line + " num=" + num);
+                                Debug.WriteLine("");**/
+                                string curr_line = lines[num_line + z].Replace(@"$i", i.ToString());
+
+                                //Debug.WriteLine("Linha corrigida:" + curr_line);
+                                string[] helper_args = curr_line.Split(" ");
+
+                                if (helper_args[0].Equals("end-repeat"))
+                                {
+                                    i++;
+                                    last_line = num_line + z;
+                                    z = 0;
+                                }
+                                else
+                                {
+                                    try
+                                    {
+                                        queue.Add(scriptReaderHelper(helper_args));
+                                    }
+                                    catch (ArgumentNullException e)
+                                    {
+                                        Debug.WriteLine("Error writing to queue: " + e);
+                                    }
+
+
+                                    z++;
+                                }
+                            }
+                            num_line = last_line;
+                        }
+                        else
+                        {
+                            Debug.WriteLine("Wrong syntax:" + lines[num_line]);
+                        }
+
+                    }
+                    else
+                    {
+                        try
+                        {
+                            queue.Add(scriptReaderHelper(args));
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.WriteLine("Error writing to queue: " + e);
+                        }
+                    }
 
                 }
+               
             }
             catch (IOException e)
             {
-                Debug.WriteLine("IO Exception while reading Script, check your reading path: "+pathToScript);
+                Debug.WriteLine("IO Exception while reading Script, check your path. Current read base path is /PuppetMaster ");
                 Debug.WriteLine(e);
             }
-
+           /** Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
+            foreach (Tuple<MethodInfo, object[]> kvp in queue)
+            {
+                Debug.WriteLine(kvp == null);
+            }
+            Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
+           */
+            return queue;
         }
-
-        public void scriptReaderHelper(string[] line)
+        private Tuple<MethodInfo, object[]> scriptReaderHelper(string[] line)
         {
-            string method = line[0];
+            string method = line[0].ToLower();
+
             if (methodList.ContainsKey(method))
             {
                 int i = 1;
 
                 MethodInfo m = methodList[method];
                 ParameterInfo[] pars = m.GetParameters();
-                Debug.WriteLine("parameters length_" + pars.Length);
+               // Debug.WriteLine("parameters length_" + pars.Length);
                 object[] method_args = new object[pars.Length];
 
                 foreach (ParameterInfo p in pars)
                 {
                     if (i < line.Length)
                     {
-                        if (p.ParameterType.IsArray)   //is starting server array
+                        if (p.ParameterType.IsArray)   
                         {
 
                             List<int> servers = new List<int>();
@@ -127,37 +194,31 @@ namespace Common
                         }
                         else if (p.ParameterType == typeof(string))
                         {
-                            Debug.WriteLine("String i: " + i);
                             method_args[p.Position] = line[i];
                             i++;
                         }
                     }
+
+
                 }
 
-                // m.Invoke(this,method_args);
+               /** // m.Invoke(this,method_args);
                 Debug.WriteLine("method : " + method + " args: " + method_args);
 
                 foreach (object z in method_args)
                 {
                     if (z != null)
                     {
-                        Debug.WriteLine("PARAM:" + i + " : " + z.GetType().ToString());
+                        Debug.WriteLine("PARAM:" + z + " : " + z.GetType().ToString());
                     }
-                    else Debug.WriteLine("PARAM:" + i + " :  NULL");
+                    else Debug.WriteLine("PARAM:" + " :  NULL");
 
                 }
-
+               **/
+                return new Tuple<MethodInfo, object[]>(m, method_args);
             }
-
-            //string[] args = new string[line.Length-1];
-            //Array.Copy(line, 1, args, 0, line.Length - 1);
-            //string res = string.Join(";", args);
-
-            //Debug.WriteLine("[{0}]", string.Join(", ", args));
-
-
+            return null;
         }
-
 
         private Dictionary<string, MethodInfo> methodsToList()
         {
@@ -169,18 +230,18 @@ namespace Common
 
             foreach (MethodInfo m in privateMethods)
             {
-                res.Add(m.Name, m);
+                res.Add(m.Name.ToLower(), m);
             }
             foreach (MethodInfo m in publicMethods)
             {
-                res.Add(m.Name, m);
+                res.Add(m.Name.ToLower(), m);
             }
 
-            Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
+           /** Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
             foreach (KeyValuePair<string, MethodInfo> kvp in res)
             {
                 Debug.WriteLine(string.Format("Key = {0}, Value = {1}", kvp.Key, kvp.Value.GetParameters().Length));
-            }
+            }**/
             return res;
         }
 
