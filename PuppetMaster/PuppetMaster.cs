@@ -38,7 +38,6 @@ namespace PuppetMaster
         private readonly int repFactor=3;
         private string hostname;
         //private int client_count=0;
-
             
         public PuppetMaster()
         {
@@ -73,6 +72,7 @@ namespace PuppetMaster
             };
             server.Start();           
             Debug.WriteLine("Setup service listening...");
+
             //Testing 'Main'
             this.Test();
 
