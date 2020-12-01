@@ -75,7 +75,7 @@ namespace GStoreServer
             //Send request
             using var call = puppetMasterService.SetUp(new SetUpRequest() { Ok = true });
             //get response
-            Debug.WriteLine("Sever:" + this.ID + " has Sent SetUP Request");
+            //Debug.WriteLine("Sever:" + this.ID + " has Sent SetUP Request");
             while (await call.ResponseStream.MoveNext())
             {
                 var objects = call.ResponseStream.Current;
@@ -95,13 +95,13 @@ namespace GStoreServer
                     }
                 }
             }
-            Debug.WriteLine("Sever:"+this.ID+" Got its topologyMap");
+            //Debug.WriteLine("Sever:"+this.ID+" Got its topologyMap");
             this.GetObjects(puppetMasterService);
         }
         //GetObjects will get the keys and values from the partitions replicated in this server
         private void GetObjects(PuppetMasterService.PuppetMasterServiceClient puppetMasterService)
         {
-            Debug.WriteLine("Sever:" + this.ID + " has Sent GetObjects Request");
+            //Debug.WriteLine("Sever:" + this.ID + " has Sent GetObjects Request");
             foreach (var p in topologyMap)
             {
                 if (p.Value.Contains(this.ID)) {
@@ -118,14 +118,14 @@ namespace GStoreServer
                     }
                 }
             }
-            foreach (var o in objects)
+            /*foreach (var o in objects) //print for testing serves
             {
                 Debug.WriteLine("Server:"+this.ID+"-Partition ID:" + o.Key);
                 foreach (var a in o.Value)
                 {
                     Debug.WriteLine("Server:" + this.ID + " Object Key:" + a.Key + " Object Value:" + a.Value);
                 }
-            }
+            }*/
         }
      
 

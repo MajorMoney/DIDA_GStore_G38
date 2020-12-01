@@ -23,10 +23,12 @@ namespace PuppetMaster
             var partList = pm.GetPartitions();
             foreach (var i in partList) 
             {
-                Dictionary<int, string> servers = pm.GetServersUrls(i);               
+                Dictionary<int, string> servers = pm.GetServersUrls(i);
+                List<int> objectIds = pm.GetObjectsIDs(i);
                 var reply = new PartitionMap();
                 reply.PartitionID = i;
                 reply.ServerInfo.Add(servers);
+                reply.ObjectsID.Add(objectIds);
                 await responseStream.WriteAsync(reply);                
             }
         }

@@ -88,11 +88,18 @@ namespace PuppetMaster
             }
             return objects;
         }
-       
+
+        internal List<int> GetObjectsIDs(int i)
+        {
+            List<int> lista = new List<int>();
+            lista.AddRange(partitions[i].objects.Keys);
+            return lista;
+        }
+
         //Returns a list with the IDs from all the existing partitions
         public List<int> GetPartitions()
         {
-            var lista =new List<int>();
+            List<int> lista =new List<int>();
             lista.AddRange(partitions.Keys);
             return lista;
         }
@@ -212,6 +219,7 @@ before reading and executing the next command in the script file.*/
             this.Server(1, "http://localhost:8171", 1000, 3000);
             this.Server(2, "http://localhost:8172", 1000, 3000);
             this.Server(3, "http://localhost:8173", 1000, 3000);
+            Thread.Sleep(1000);
             this.Client(1, "http://localhost:8181", "script");
         }
 
@@ -366,5 +374,7 @@ before reading and executing the next command in the script file.*/
             }
             return res;
         }
+
+       
     }
 }
