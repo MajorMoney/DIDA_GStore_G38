@@ -85,6 +85,8 @@ namespace GStoreClient
             while (await call.ResponseStream.MoveNext())
             {
                 var objects = call.ResponseStream.Current;
+                Debug.WriteLine(objects);
+
                 var serversID = new List<int>();
                 var objectsID = new List<int>();
                 objectsID.AddRange(objects.ObjectsID);
@@ -115,6 +117,7 @@ namespace GStoreClient
                     Debug.WriteLine("Client:" + this.ID + " Object ID:" + a );
                 }
             }*/
+            
             Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
             Debug.WriteLine("1)");
             ReadLogic(1, 1, -1);//1)harcoded test
@@ -132,6 +135,10 @@ namespace GStoreClient
             ReadLogic(4, 1, 3);//7)harcoded test
             Debug.WriteLine("8)");
             ReadLogic(1, 5, -1);//8)harcoded test
+
+
+            listServer(3);
+
         }
 
 
@@ -198,9 +205,9 @@ namespace GStoreClient
 
         }
         //problema de recursividade,infinite while loop, mudar eventualmente
-        private void ReadLogic(int partition_id, int object_id, int server_id)
+        private string ReadLogic(int partition_id, int object_id, int server_id)
         {
-
+            string res=null;
 
             if (!topologyMap.ContainsKey(partition_id) || !objectsMap[partition_id].Contains(object_id))
             {
@@ -215,12 +222,12 @@ namespace GStoreClient
                 //attached server has the object
                 if (topologyMap[partition_id].Contains(attachedServerID))
                 {
-                    Read(partition_id, object_id);
+                 res=   Read(partition_id, object_id);
                 }
                 else if (server_id != -1)
                 {
                     TryAttach(serverUrls[server_id]);
-                    ReadLogic(partition_id, object_id, server_id);
+                  res=  ReadLogic(partition_id, object_id, server_id);
                 }
                 else
                 {
@@ -233,7 +240,7 @@ namespace GStoreClient
             {
                 //Client will try to attach to the given ID
                 TryAttach(serverUrls[server_id]);
-                ReadLogic(partition_id, object_id, server_id);
+                res = ReadLogic(partition_id, object_id, server_id);
 
             }
             else
@@ -243,10 +250,10 @@ namespace GStoreClient
                 Debug.WriteLine("it was impossible to send the read Request ");
                 Debug.WriteLine("Client not atached to a server and has no server ID as an attach reference ");
             }
-
+            return res;
         }
 
-        private void Read(int partition_id, int object_id)
+        private string Read(int partition_id, int object_id)
         {
 
             var attachService = new AttachServerService.AttachServerServiceClient(attachedServerChannel);
@@ -255,7 +262,8 @@ namespace GStoreClient
                 PartitionID = partition_id,
                 ObjectID = object_id
             });
-            Debug.WriteLine("Client read value:" + reply.Value + " from: " + attachedServerUrl);
+            Debug.WriteLine("Client read value:" + reply.Value + " from: " + attachedServerUrl + "in partition "+partition_id);
+            return reply.Value;
         }
 
         private void write(int partition_id, int object_id, string value)
@@ -264,7 +272,52 @@ namespace GStoreClient
         }
         private void listServer(int server_id)
         {
-            Debug.WriteLine("listServer : " + server_id);
+            List<int> partitions = new List<int>();
+            Dictionary<int, int[]> toRead = new Dictionary<int, int[]>();
+            
+            foreach (KeyValuePair<int, List<int>> kvp in topologyMap)
+            {
+                if (kvp.Value.Contains(server_id))
+                {
+                    partitions.Add(kvp.Key);
+                    Debug.WriteLine("Partition to check: " + kvp.Key);
+                }
+            }
+            List<Tuple<int,Tuple<int,string>>> list = new List<Tuple<int, Tuple<int, string>>>(); 
+            foreach (int i in partitions)
+            {
+                foreach (int z in objectsMap[i])
+                {
+                    string res = ReadLogic(i, z, server_id);
+                    Tuple<int, string> object_response = new Tuple<int, string>(z, res); //object_id + object content
+                    Tuple<int, Tuple<int, string>> partition_object = new Tuple<int, Tuple<int, string>>(i, object_response); //partition + object
+                    list.Add(partition_object);
+                }
+            }
+            Debug.WriteLine("Contents in server " + server_id +" :");
+            
+            int init = list[0].Item1;
+            Debug.WriteLine("Partition " + init);
+
+            foreach (Tuple<int, Tuple<int, string>> x in list) {
+
+                if (x.Item1 == init)
+                {
+                    Debug.WriteLine("Object id: " + x.Item2.Item1 + " --> Contents: " + x.Item2.Item2.ToString());
+
+                }
+                else
+                {
+                    init = x.Item1;
+                    Debug.WriteLine("Partition " + init);
+
+                    Debug.WriteLine("Object id: " + x.Item2.Item1 + " --> Contents: " + x.Item2.Item2);
+
+                }
+
+            }
+            
+
         }
         private void listGlobal()
         {
