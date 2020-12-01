@@ -138,7 +138,7 @@ namespace GStoreClient
 
 
             listServer(3);
-
+            listGlobal();
         }
 
 
@@ -321,6 +321,21 @@ namespace GStoreClient
         }
         private void listGlobal()
         {
+            foreach(int i in serverUrls.Keys)
+            {
+                Debug.WriteLine("Server " + i + " at " + serverUrls[i]);
+                foreach(KeyValuePair < int, List<int>> part_server in topologyMap)
+                {
+                    if (part_server.Value.Contains(i))
+                    {
+                        Debug.WriteLine("Partition " + part_server.Key + " :");
+                        foreach(int obj in objectsMap[part_server.Key]) {
+                            Debug.WriteLine("Object id: " + obj);
+                        }
+                    }
+                }
+
+            }
             Debug.WriteLine("listGlobal");
         }
 
