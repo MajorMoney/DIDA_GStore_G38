@@ -118,7 +118,7 @@ namespace GStoreClient
                 }
             }*/
             
-            Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
+            /**Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
             Debug.WriteLine("1)");
             ReadLogic(1, 1, -1);//1)harcoded test
             Debug.WriteLine("2)");
@@ -138,7 +138,7 @@ namespace GStoreClient
             //OI
 
 
-            listServer(3);
+            listServer(3);**/
             listGlobal();
         }
 
@@ -192,8 +192,14 @@ namespace GStoreClient
 
         static void Main(string[] args)
         {
-            ScriptReader x = new ScriptReader();
-            List<Tuple<MethodInfo, object[]>> queue = x.readScript(@"Scripts\client_script1");
+            Log x = new Log("oi");
+            for(int i =0; i!=99;i++)
+            x.WriteLine("coninha");
+
+            Thread.Sleep(5000);
+            x.close();
+            //ScriptReader x = new ScriptReader();
+            //List<Tuple<MethodInfo, object[]>> queue = x.readScript(@"Scripts\client_script1");
             /**Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
             foreach (Tuple<MethodInfo, object[]> kvp in queue)
             {
@@ -233,7 +239,7 @@ namespace GStoreClient
                 else
                 {
                     //attached server doesnt have the refered object and no other server reference
-                    Debug.WriteLine("it was impossible to send the read Request ");
+                    Debug.WriteLine("it was impossible to send the read Request");
                     Debug.WriteLine("attached server doesnt have the refered object and no other server reference");
                 }
             }
@@ -328,7 +334,7 @@ namespace GStoreClient
                 foreach(KeyValuePair < int, List<int>> part_server in topologyMap)
                 {
                     if (part_server.Value.Contains(i))
-                    {//OI
+                    {
                         Debug.WriteLine("Partition " + part_server.Key + " :");
                         foreach(int obj in objectsMap[part_server.Key]) {
                             Debug.WriteLine("Object id: " + obj);

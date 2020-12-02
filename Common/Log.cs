@@ -15,37 +15,61 @@ namespace Common
         private BlockingCollection<string> logMessages;
 
         private string pathToFile;
-
         public Log(string filename)
         {
             logMessages = new BlockingCollection<string>();
-            parseFile(filename);
+            parseFile(@filename);
             Thread writerThread = new Thread(new ThreadStart(write));
-            writerThread.Start();
+           writerThread.Start();
         }
 
-        
+        //Use to stop logger
+        public void close()
+        {
+            logMessages.CompleteAdding();
+            
+        }
         private void write() {
+           
+             
             while (true)
             {
-                if (logMessages.Count> 0)
-                    {
+                if (logMessages.IsCompleted)
+                {
+                    Debug.WriteLine("Log closed");
+                    
+                    break;
+                }
+                    if (logMessages.Count > 0)
+                {
+
                     string line;
-                    if(logMessages.TryTake(out line))
-                    {
-                        using (StreamWriter sw = File.AppendText(pathToFile))
+                        if (logMessages.TryTake(out line))
                         {
+
+                        using (StreamWriter sw = new StreamWriter(@pathToFile,append: true))
+                        {
+                            
                             sw.WriteLine(line);
                             sw.Close();
+
                         }
                     }
-                    
-                    }
-                Debug.WriteLine(logMessages.Count);
-                
+                   
+
+                }
+                else
+                {
+                    Thread.Sleep(100);
+                }
+
+
+
             }
+            return;
         }
 
+        //use to write line to previously defined log file
         public void WriteLine(string line)
         {
             logMessages.Add(line);
@@ -58,17 +82,17 @@ namespace Common
             string _type = declaringType.ToString().ToLower();
             if (_type.Contains("client"))
             {
-                pathToFile = @"..\..\..\..\GStoreClient\" + filename;
+                pathToFile = @"..\..\..\..\GStoreClient\Logs\" + @filename;
                 Debug.WriteLine(pathToFile);
             }
             else if (_type.Contains("puppetmaster"))
             {
-                pathToFile = @"..\..\..\..\PuppetMaster\" + filename;
+                pathToFile = @"..\..\..\..\PuppetMaster\Logs\" + @filename;
                 Debug.WriteLine(pathToFile);
             }
             if (_type.Contains("server"))
             {
-                pathToFile = @"..\..\..\..\GStoreServer\" + filename;
+                pathToFile = @"..\..\..\..\GStoreServer\Logs\" + @filename;
                 Debug.WriteLine(pathToFile);
             }
         }
