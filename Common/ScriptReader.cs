@@ -131,13 +131,13 @@ namespace Common
                 Debug.WriteLine("IO Exception while reading Script, check your path. Current read base path is /PuppetMaster ");
                 Debug.WriteLine(e);
             }
-           /** Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
+            Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
             foreach (Tuple<MethodInfo, object[]> kvp in queue)
             {
-                Debug.WriteLine(kvp == null);
+                Debug.WriteLine("Method: "+ kvp.Item1.Name+ "-->" + string.Join(" ; ",kvp.Item2));
             }
             Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
-           */
+           
             return queue;
         }
         private Tuple<MethodInfo, object[]> scriptReaderHelper(string[] line)

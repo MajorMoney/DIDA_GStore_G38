@@ -521,7 +521,7 @@ namespace PuppetMaster
         {
             if (puppetMaster == null)
             {
-                this.puppetMaster = new PuppetMaster();
+                this.puppetMaster = new PuppetMaster(this);
             }
             else
             {
@@ -663,12 +663,21 @@ namespace PuppetMaster
             }
 
         }
+        private delegate void SafeCallDelegate(string text);
+
         public void WriteLine(string s)
         {
-            Debug.WriteLine("Reached console: " + s);
-            textConsole.AppendText(s);
-            textConsole.AppendText(Environment.NewLine);
-
+            if (textConsole.InvokeRequired)
+            {
+                var d = new SafeCallDelegate(WriteLine);
+                textConsole.Invoke(d, new object[] { s });
+            }
+            else
+            {
+                Debug.WriteLine("Reached console: " + s);
+                textConsole.AppendText(s);
+                textConsole.AppendText(Environment.NewLine);
+            }
         }
         private bool checkIfInit() {
             if (puppetMaster == null)
