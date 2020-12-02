@@ -69,7 +69,7 @@ namespace PuppetMaster
             ServerPort sp = new ServerPort("localhost", 10001, ServerCredentials.Insecure);            
             Server server = new Server
             {
-                Services = { PuppetMasterService.BindService(new SetUpService(this)) },
+                Services = { PuppetMasterService.BindService(new PuppetMasterToNodeService(this)) },
                 Ports = { sp }
             };
             server.Start();           
@@ -92,13 +92,14 @@ namespace PuppetMaster
         //Returns the objects keys and values from a given  partition 
         public Dictionary<int, string> GetObjects(int pID)
         {
-            Dictionary<int, string> objects = new Dictionary<int, string>();            
+            Dictionary<int, string> reply = new Dictionary<int, string>();            
             foreach (var p in partitions[pID].objects)
             {
 
-                objects.Add(p.Key,p.Value);
+                reply.Add(p.Key,p.Value);
+
             }
-            return objects;
+            return reply;
         }
 
         internal List<int> GetObjectsIDs(int i)
@@ -122,7 +123,6 @@ namespace PuppetMaster
             Dictionary<int, string> temp= new Dictionary<int, string>();
             foreach (var serverID in partitions[pID].Servers)
             {
-                
 
                 temp.Add(serverID,this.servers[serverID]);
             }

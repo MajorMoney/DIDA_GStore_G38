@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 namespace PuppetMaster
 {
     
-    class SetUpService :PuppetMasterService.PuppetMasterServiceBase
+    class PuppetMasterToNodeService :PuppetMasterService.PuppetMasterServiceBase
     {
         private PuppetMaster pm;
 
 
-        public SetUpService(PuppetMaster pm)
+        public PuppetMasterToNodeService(PuppetMaster pm)
         {
             this.pm = pm;
         }
