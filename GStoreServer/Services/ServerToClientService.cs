@@ -1,16 +1,16 @@
 ﻿using Grpc.Core;
-using GStoreServer_server;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace GStoreServer.Services
 {
-    class AttachService : AttachServerService.AttachServerServiceBase
+    class ServerToClientService : AttachServerService.AttachServerServiceBase
     {
         private ServerShell shell;
-        public AttachService(ServerShell shell)
+        public ServerToClientService(ServerShell shell)
         {
             this.shell = shell;
         }
@@ -36,10 +36,28 @@ namespace GStoreServer.Services
 
         private ReadReply Rdd(ReadRequest request)
         {
+            Debug.WriteLine("TESTOU!");
             string value = shell.GetObjectValue(request.PartitionID,request.ObjectID);
             ReadReply reply = new ReadReply
             {
                 Value = value
+            };
+            return reply;
+        }
+
+
+        public async override Task<WriteReply> Write(WriteRequest request, ServerCallContext context)
+        {
+            return await Task.FromResult((Wrt(request)));
+        }
+
+        private WriteReply Wrt(WriteRequest request)
+        {
+            bool Ack = shell.Write(request.PartitionID,request.ObjectID,request.Value);
+            WriteReply reply = new WriteReply
+            {
+                ObjID = 1,
+                Value = "teste"
             };
             return reply;
         }

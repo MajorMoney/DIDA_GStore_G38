@@ -1,8 +1,6 @@
 ﻿using Common;
 using Grpc.Core;
 using Grpc.Net.Client;
-using GStoreClient_server;
-using PuppetMaster;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -37,7 +35,7 @@ namespace GStoreClient
         private Dictionary<int, List<int>> topologyMap;
         private Dictionary<int, List<int>> objectsMap;
         private Dictionary<int, string> serverUrls;
-        private Dictionary<string, MethodInfo> methodList;
+        private Dictionary<string, MethodInfo> methodList; 
         //Client other atributes
         private int ID;
         private string hostname;
@@ -95,7 +93,7 @@ namespace GStoreClient
                 {
                     topologyMap.TryAdd(objects.PartitionID, serversID);
                 }
-                lock (this)
+                lock (this.objectsMap)
                 {
                     objectsMap.TryAdd(objects.PartitionID, objectsID);
                 }
@@ -118,30 +116,42 @@ namespace GStoreClient
                 }
             }*/
             
-            /**Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
+            Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
+            Debug.WriteLine("5)");
+            TryAttach("http://localhost:8172");//5)
             Debug.WriteLine("1)");
-            ReadLogic(1, 1, -1);//1)harcoded test
+            ReadLogic(1, 1, 1);//1)harcoded test
+            Thread.Sleep(500);
             Debug.WriteLine("2)");
             ReadLogic(1, 1, 2);//2)harcoded test
+            Thread.Sleep(500);
             Debug.WriteLine("3)");
             ReadLogic(1, 1, -1);//3)harcoded test
+            Thread.Sleep(500);
             Debug.WriteLine("4)");
-            ReadLogic(1, 1, 3);//4)harcoded test
-            Debug.WriteLine("5)");
-            TryAttach("http://localhost:8171");//5)
+            ReadLogic(1, 1, 3);//4)harcoded test  
+            Thread.Sleep(500);
             Debug.WriteLine("6)");
             ReadLogic(1, 1, 3);//6)harcoded test
+            Thread.Sleep(500);
             Debug.WriteLine("7)");
             ReadLogic(4, 1, 3);//7)harcoded test
+            Thread.Sleep(500);
             Debug.WriteLine("8)");
             ReadLogic(1, 5, -1);//8)harcoded test
-            //OI
-
-
-            listServer(3);**/
+            Write(1, 1, "TESTEA");
+            listServer(3);
             listGlobal();
         }
 
+
+
+        public void TryAttachMaster(int partitionID)
+        {
+            var temp = new int[topologyMap[partitionID].Count];
+            topologyMap[partitionID].CopyTo(temp);
+            TryAttach(serverUrls[temp[0]]);
+        }
 
 
 
@@ -192,14 +202,8 @@ namespace GStoreClient
 
         static void Main(string[] args)
         {
-            Log x = new Log("oi");
-            for(int i =0; i!=99;i++)
-            x.WriteLine("coninha");
-
-            Thread.Sleep(5000);
-            x.close();
-            //ScriptReader x = new ScriptReader();
-            //List<Tuple<MethodInfo, object[]>> queue = x.readScript(@"Scripts\client_script1");
+            ScriptReader x = new ScriptReader();
+            List<Tuple<MethodInfo, object[]>> queue = x.readScript(@"Scripts\client_script1");
             /**Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
             foreach (Tuple<MethodInfo, object[]> kvp in queue)
             {
@@ -239,7 +243,7 @@ namespace GStoreClient
                 else
                 {
                     //attached server doesnt have the refered object and no other server reference
-                    Debug.WriteLine("it was impossible to send the read Request");
+                    Debug.WriteLine("it was impossible to send the read Request ");
                     Debug.WriteLine("attached server doesnt have the refered object and no other server reference");
                 }
             }
@@ -262,20 +266,38 @@ namespace GStoreClient
 
         private string Read(int partition_id, int object_id)
         {
-
             var attachService = new AttachServerService.AttachServerServiceClient(attachedServerChannel);
             var reply = attachService.Read(new ReadRequest()
             {
                 PartitionID = partition_id,
                 ObjectID = object_id
             });
-            Debug.WriteLine("Client read value:" + reply.Value + " from: " + attachedServerUrl + "in partition "+partition_id);
-            return reply.Value;
+           return reply.Value;
+
         }
 
-        private void write(int partition_id, int object_id, string value)
+        private void Write(int partition_id, int object_id, string value)
         {
-            Debug.WriteLine("Read method : " + partition_id + " " + object_id + " " + value);
+            if (topologyMap.ContainsKey(partition_id) && objectsMap[partition_id].Contains(object_id))
+            {
+                TryAttachMaster(partition_id);
+                var attachService = new AttachServerService.AttachServerServiceClient(attachedServerChannel);
+                var reply = attachService.Write(new WriteRequest()
+                {
+                    PartitionID = partition_id,
+                    ObjectID = object_id,
+                    Value=value
+                });
+
+
+                //implementar resposta
+            }
+            else
+            {
+                //Partition does not exist  || Item does not exist in the specified Partition
+                Debug.WriteLine("N/A");
+                Debug.WriteLine("Failed  to write,Partition does not exist  || Item does not exist in the specified Partition");
+            }
         }
         private void listServer(int server_id)
         {
@@ -334,7 +356,7 @@ namespace GStoreClient
                 foreach(KeyValuePair < int, List<int>> part_server in topologyMap)
                 {
                     if (part_server.Value.Contains(i))
-                    {
+                    {//OI
                         Debug.WriteLine("Partition " + part_server.Key + " :");
                         foreach(int obj in objectsMap[part_server.Key]) {
                             Debug.WriteLine("Object id: " + obj);
