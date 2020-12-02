@@ -27,7 +27,7 @@ namespace PuppetMaster
             char[] abc = { 'a', 'b', 'c' , 'd' , 'e', 'f'};
             for (int i =1; i<Factor+1;i++)
             {
-                objects.Add(i,"String"+abc[i-1]);
+                objects.Add(i,"String "+abc[i-1]);
             }
         }
 

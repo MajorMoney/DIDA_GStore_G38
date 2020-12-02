@@ -1,4 +1,5 @@
-﻿using Grpc.Core;
+﻿using Common;
+using Grpc.Core;
 using Grpc.Net.Client;
 using System;
 using System.Collections.Generic;
@@ -82,6 +83,8 @@ namespace GStoreClient
             while (await call.ResponseStream.MoveNext())
             {
                 var objects = call.ResponseStream.Current;
+                Debug.WriteLine(objects);
+
                 var serversID = new List<int>();
                 var objectsID = new List<int>();
                 objectsID.AddRange(objects.ObjectsID);
@@ -112,6 +115,7 @@ namespace GStoreClient
                     Debug.WriteLine("Client:" + this.ID + " Object ID:" + a );
                 }
             }*/
+            
             Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
             Debug.WriteLine("5)");
             TryAttach("http://localhost:8172");//5)
@@ -136,6 +140,8 @@ namespace GStoreClient
             Debug.WriteLine("8)");
             ReadLogic(1, 5, -1);//8)harcoded test
             Write(1, 1, "TESTEA");
+            listServer(3);
+            listGlobal();
         }
 
 
@@ -196,6 +202,13 @@ namespace GStoreClient
 
         static void Main(string[] args)
         {
+            ScriptReader x = new ScriptReader();
+            List<Tuple<MethodInfo, object[]>> queue = x.readScript(@"Scripts\client_script1");
+            /**Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
+            foreach (Tuple<MethodInfo, object[]> kvp in queue)
+            {
+                Debug.WriteLine(string.Format("Key = {0}, Value = {1}", kvp.Item1, string.Join(";", kvp.Item2)));
+            }**/
             //var ss = new ServerShell("localhost", 1001);
             //ClientLogic a = new ClientLogic();
             //a.readScript(@"Scripts\custom_test");
@@ -203,9 +216,9 @@ namespace GStoreClient
 
         }
         //problema de recursividade,infinite while loop, mudar eventualmente
-        private void ReadLogic(int partition_id, int object_id, int server_id)
+        private string ReadLogic(int partition_id, int object_id, int server_id)
         {
-
+            string res=null;
 
             if (!topologyMap.ContainsKey(partition_id) || !objectsMap[partition_id].Contains(object_id))
             {
@@ -220,12 +233,12 @@ namespace GStoreClient
                 //attached server has the object
                 if (topologyMap[partition_id].Contains(attachedServerID))
                 {
-                    Read(partition_id, object_id);
+                 res=   Read(partition_id, object_id);
                 }
                 else if (server_id != -1)
                 {
                     TryAttach(serverUrls[server_id]);
-                    ReadLogic(partition_id, object_id, server_id);
+                  res=  ReadLogic(partition_id, object_id, server_id);
                 }
                 else
                 {
@@ -238,18 +251,20 @@ namespace GStoreClient
             {
                 //Client will try to attach to the given ID
                 TryAttach(serverUrls[server_id]);
-                ReadLogic(partition_id, object_id, server_id);
+                res = ReadLogic(partition_id, object_id, server_id);
+
             }
             else
             {
+
                 //Client not atached to a server and has no server ID as an attach reference
                 Debug.WriteLine("it was impossible to send the read Request ");
                 Debug.WriteLine("Client not atached to a server and has no server ID as an attach reference ");
             }
-
+            return res;
         }
 
-        private void Read(int partition_id, int object_id)
+        private string Read(int partition_id, int object_id)
         {
             var attachService = new AttachServerService.AttachServerServiceClient(attachedServerChannel);
             var reply = attachService.Read(new ReadRequest()
@@ -257,7 +272,8 @@ namespace GStoreClient
                 PartitionID = partition_id,
                 ObjectID = object_id
             });
-            Debug.WriteLine("Client read value:" + reply.Value + " from: " + attachedServerUrl);
+           return reply.Value;
+
         }
 
         private void Write(int partition_id, int object_id, string value)
@@ -285,10 +301,70 @@ namespace GStoreClient
         }
         private void listServer(int server_id)
         {
-            Debug.WriteLine("listServer : " + server_id);
+            List<int> partitions = new List<int>();
+            Dictionary<int, int[]> toRead = new Dictionary<int, int[]>();
+            
+            foreach (KeyValuePair<int, List<int>> kvp in topologyMap)
+            {
+                if (kvp.Value.Contains(server_id))
+                {
+                    partitions.Add(kvp.Key);
+                    Debug.WriteLine("Partition to check: " + kvp.Key);
+                }
+            }
+            List<Tuple<int,Tuple<int,string>>> list = new List<Tuple<int, Tuple<int, string>>>(); 
+            foreach (int i in partitions)
+            {
+                foreach (int z in objectsMap[i])
+                {
+                    string res = ReadLogic(i, z, server_id);
+                    Tuple<int, string> object_response = new Tuple<int, string>(z, res); //object_id + object content
+                    Tuple<int, Tuple<int, string>> partition_object = new Tuple<int, Tuple<int, string>>(i, object_response); //partition + object
+                    list.Add(partition_object);
+                }
+            }
+            Debug.WriteLine("Contents in server " + server_id +" :");
+            
+            int init = list[0].Item1;
+            Debug.WriteLine("Partition " + init);
+
+            foreach (Tuple<int, Tuple<int, string>> x in list) {
+
+                if (x.Item1 == init)
+                {
+                    Debug.WriteLine("Object id: " + x.Item2.Item1 + " --> Contents: " + x.Item2.Item2.ToString());
+
+                }
+                else
+                {
+                    init = x.Item1;
+                    Debug.WriteLine("Partition " + init);
+
+                    Debug.WriteLine("Object id: " + x.Item2.Item1 + " --> Contents: " + x.Item2.Item2);
+
+                }
+
+            }
+            
+
         }
         private void listGlobal()
         {
+            foreach(int i in serverUrls.Keys)
+            {
+                Debug.WriteLine("Server " + i + " at " + serverUrls[i]);
+                foreach(KeyValuePair < int, List<int>> part_server in topologyMap)
+                {
+                    if (part_server.Value.Contains(i))
+                    {//OI
+                        Debug.WriteLine("Partition " + part_server.Key + " :");
+                        foreach(int obj in objectsMap[part_server.Key]) {
+                            Debug.WriteLine("Object id: " + obj);
+                        }
+                    }
+                }
+
+            }
             Debug.WriteLine("listGlobal");
         }
 
@@ -300,252 +376,6 @@ namespace GStoreClient
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        /****** SURICATA ******/
-
-
-        public void readScript(string path)
-        {
-            //Current runtime directory -> PuppetMaster\bin\Debug\netcoreapp3.1 -> string path1 = Directory.GetCurrentDirectory();
-
-            List<Tuple<MethodInfo, object[]>> queue = new List<Tuple<MethodInfo, object[]>>();
-            string pathToFile = @"..\..\..\..\PuppetMaster\" + path; //Go back to \PuppetMaster directory 
-
-            Debug.WriteLine("Reading script in " + pathToFile);
-
-            try
-            {
-                string[] lines = File.ReadAllLines(pathToFile);
-                //int num_line = 0;
-                for (int num_line = 0; num_line < lines.Length; num_line++)
-                {
-                    string[] args = lines[num_line].Split(" ");
-                    Debug.WriteLine(lines[num_line]);
-
-
-                    if (args[0].Equals("begin-repeat"))
-                    {
-
-                        num_line++;
-                        int num;
-                        if (Int32.TryParse(args[1], out num))
-                        {
-                            int i = 0;
-                            int z = 0;
-                            int last_line = 0;
-                            while (i < num)
-                            {
-                                Debug.WriteLine("Iteração: i=" + i + "  z=" + z + "  last_line=" + last_line + " num=" + num);
-                                Debug.WriteLine("");
-                                string curr_line = lines[num_line + z].Replace(@"$i", i.ToString());
-
-                                Debug.WriteLine("Linha corrigida:" + curr_line);
-                                string[] helper_args = curr_line.Split(" ");
-
-                                if (helper_args[0].Equals("end-repeat"))
-                                {
-                                    i++;
-                                    last_line = num_line + z;
-                                    z = 0;
-                                }
-                                else
-                                {
-                                    try
-                                    {
-                                        queue.Add(scriptReaderHelper(helper_args));
-                                    }
-                                    catch (ArgumentNullException e)
-                                    {
-                                        Debug.WriteLine("Error writing to queue: " + e);
-                                    }
-
-
-                                    z++;
-                                }
-                            }
-                            num_line = last_line;
-                        }
-                        else
-                        {
-                            Debug.WriteLine("Wrong syntax:" + lines[num_line]);
-                        }
-
-                    }
-                    else
-                    {
-                        try
-                        {
-                            queue.Add(scriptReaderHelper(args));
-                        }
-                        catch (Exception e)
-                        {
-                            Debug.WriteLine("Error writing to queue: " + e);
-                        }
-                    }
-
-                }
-            }
-            catch (IOException e)
-            {
-                Debug.WriteLine("IO Exception while reading Script, check your path. Current read base path is /PuppetMaster ");
-                Debug.WriteLine(e);
-            }
-            Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
-            foreach (Tuple<MethodInfo, object[]> kvp in queue)
-            {
-                Debug.WriteLine(string.Format("Key = {0}, Value = {1}", kvp.Item1, string.Join(";", kvp.Item2)));
-            }
-            Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
-
-            execute(queue);
-        }
-
-        private void execute(List<Tuple<MethodInfo, object[]>> tasks)
-        {
-            foreach (Tuple<MethodInfo, object[]> task in tasks)
-            {
-                MethodInfo method = task.Item1;
-                try
-                {
-                    object x = method.Invoke(this, task.Item2);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-            }
-        }
-        private Tuple<MethodInfo, object[]> scriptReaderHelper(string[] line)
-        {
-            string method = line[0];
-
-            if (methodList.ContainsKey(method))
-            {
-                int i = 1;
-
-                MethodInfo m = methodList[method];
-                ParameterInfo[] pars = m.GetParameters();
-                Debug.WriteLine("parameters length_" + pars.Length);
-                object[] method_args = new object[pars.Length];
-
-                foreach (ParameterInfo p in pars)
-                {
-                    if (i < line.Length)
-                    {
-                        if (p.ParameterType.IsArray)   //is starting server array
-                        {
-
-                            List<int> servers = new List<int>();
-
-                            while (i < line.Length && line[i].StartsWith("s"))
-                            {
-                                servers.Add(Int32.Parse(line[i].Substring(1)));
-                                i++;
-                            }
-
-                            method_args[p.Position] = servers.ToArray();
-                            break;
-
-
-                        }
-                        else if (p.ParameterType == typeof(Int32))
-                        {
-                            int number;
-                            if (Int32.TryParse(line[i], out number))
-                            {
-                                method_args[p.Position] = number;
-                                i++;
-                            }
-                            else try
-                                {
-                                    number = Int32.Parse(line[i].Substring(1));
-                                    method_args[p.Position] = number;
-                                    i++;
-                                }
-                                catch (Exception e)
-                                {
-                                    Debug.WriteLine("Cannot convert this value: " + line[i]);
-                                }
-                        }
-                        else if (p.ParameterType == typeof(string))
-                        {
-                            Debug.WriteLine("String i: " + i);
-                            method_args[p.Position] = line[i];
-                            i++;
-                        }
-                    }
-
-
-                }
-
-                // m.Invoke(this,method_args);
-                Debug.WriteLine("method : " + method + " args: " + method_args);
-
-                foreach (object z in method_args)
-                {
-                    if (z != null)
-                    {
-                        Debug.WriteLine("PARAM:" + z + " : " + z.GetType().ToString());
-                    }
-                    else Debug.WriteLine("PARAM:" + " :  NULL");
-
-                }
-
-                return new Tuple<MethodInfo, object[]>(m, method_args);
-            }
-            return null;
-
-
-            //string[] args = new string[line.Length-1];
-            //Array.Copy(line, 1, args, 0, line.Length - 1);
-            //string res = string.Join(";", args);
-
-            //Debug.WriteLine("[{0}]", string.Join(", ", args));
-
-
-        }
-        private Dictionary<string, MethodInfo> methodsToList()
-        {
-
-            Type myType = (typeof(ClientLogic));
-            MethodInfo[] privateMethods = myType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            MethodInfo[] publicMethods = myType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            Dictionary<string, MethodInfo> res = new Dictionary<string, MethodInfo>();
-
-            foreach (MethodInfo m in privateMethods)
-            {
-                res.Add(m.Name, m);
-            }
-            foreach (MethodInfo m in publicMethods)
-            {
-                res.Add(m.Name, m);
-            }
-
-            Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
-            foreach (KeyValuePair<string, MethodInfo> kvp in res)
-            {
-                Debug.WriteLine(string.Format("Key = {0}, Value = {1}", kvp.Key, kvp.Value.GetParameters().Length));
-            }
-            return res;
-        }
 
     }
 }
