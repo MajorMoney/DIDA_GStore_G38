@@ -1,7 +1,5 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
-using GStoreClient_server;
-using PuppetMaster;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,7 +34,7 @@ namespace GStoreClient
         private Dictionary<int, List<int>> topologyMap;
         private Dictionary<int, List<int>> objectsMap;
         private Dictionary<int, string> serverUrls;
-        private Dictionary<string, MethodInfo> methodList;
+        private Dictionary<string, MethodInfo> methodList; 
         //Client other atributes
         private int ID;
         private string hostname;
@@ -92,7 +90,7 @@ namespace GStoreClient
                 {
                     topologyMap.TryAdd(objects.PartitionID, serversID);
                 }
-                lock (this)
+                lock (this.objectsMap)
                 {
                     objectsMap.TryAdd(objects.PartitionID, objectsID);
                 }
@@ -115,24 +113,39 @@ namespace GStoreClient
                 }
             }*/
             Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
+            Debug.WriteLine("5)");
+            TryAttach("http://localhost:8172");//5)
             Debug.WriteLine("1)");
-            ReadLogic(1, 1, -1);//1)harcoded test
+            ReadLogic(1, 1, 1);//1)harcoded test
+            Thread.Sleep(500);
             Debug.WriteLine("2)");
             ReadLogic(1, 1, 2);//2)harcoded test
+            Thread.Sleep(500);
             Debug.WriteLine("3)");
             ReadLogic(1, 1, -1);//3)harcoded test
+            Thread.Sleep(500);
             Debug.WriteLine("4)");
-            ReadLogic(1, 1, 3);//4)harcoded test
-            Debug.WriteLine("5)");
-            TryAttach("http://localhost:8171");//5)
+            ReadLogic(1, 1, 3);//4)harcoded test  
+            Thread.Sleep(500);
             Debug.WriteLine("6)");
             ReadLogic(1, 1, 3);//6)harcoded test
+            Thread.Sleep(500);
             Debug.WriteLine("7)");
             ReadLogic(4, 1, 3);//7)harcoded test
+            Thread.Sleep(500);
             Debug.WriteLine("8)");
             ReadLogic(1, 5, -1);//8)harcoded test
+            Write(1, 1, "TESTEA");
         }
 
+
+
+        public void TryAttachMaster(int partitionID)
+        {
+            var temp = new int[topologyMap[partitionID].Count];
+            topologyMap[partitionID].CopyTo(temp);
+            TryAttach(serverUrls[temp[0]]);
+        }
 
 
 
@@ -173,7 +186,7 @@ namespace GStoreClient
         public void AttachedServerShutdown(GrpcChannel channel)
         {
             channel.ShutdownAsync().Wait();
-            Debug.WriteLine("Attach conection with:"+ channel.Target+"  was shutdowned sucefully");
+            Debug.WriteLine("Attach conection with:" + channel.Target + "  was shutdowned sucefully");
         }
         public void PuppetShutdown()
         {
@@ -209,7 +222,7 @@ namespace GStoreClient
                 {
                     Read(partition_id, object_id);
                 }
-                else if(server_id != -1)
+                else if (server_id != -1)
                 {
                     TryAttach(serverUrls[server_id]);
                     ReadLogic(partition_id, object_id, server_id);
@@ -226,11 +239,9 @@ namespace GStoreClient
                 //Client will try to attach to the given ID
                 TryAttach(serverUrls[server_id]);
                 ReadLogic(partition_id, object_id, server_id);
-                
             }
             else
             {
-                
                 //Client not atached to a server and has no server ID as an attach reference
                 Debug.WriteLine("it was impossible to send the read Request ");
                 Debug.WriteLine("Client not atached to a server and has no server ID as an attach reference ");
@@ -240,19 +251,37 @@ namespace GStoreClient
 
         private void Read(int partition_id, int object_id)
         {
-
             var attachService = new AttachServerService.AttachServerServiceClient(attachedServerChannel);
             var reply = attachService.Read(new ReadRequest()
             {
                 PartitionID = partition_id,
                 ObjectID = object_id
             });
-            Debug.WriteLine("Client read value:" + reply.Value+" from: " +attachedServerUrl);
+            Debug.WriteLine("Client read value:" + reply.Value + " from: " + attachedServerUrl);
         }
 
-        private void write(int partition_id, int object_id, string value)
+        private void Write(int partition_id, int object_id, string value)
         {
-            Debug.WriteLine("Read method : " + partition_id + " " + object_id + " " + value);
+            if (topologyMap.ContainsKey(partition_id) && objectsMap[partition_id].Contains(object_id))
+            {
+                TryAttachMaster(partition_id);
+                var attachService = new AttachServerService.AttachServerServiceClient(attachedServerChannel);
+                var reply = attachService.Write(new WriteRequest()
+                {
+                    PartitionID = partition_id,
+                    ObjectID = object_id,
+                    Value=value
+                });
+
+
+                //implementar resposta
+            }
+            else
+            {
+                //Partition does not exist  || Item does not exist in the specified Partition
+                Debug.WriteLine("N/A");
+                Debug.WriteLine("Failed  to write,Partition does not exist  || Item does not exist in the specified Partition");
+            }
         }
         private void listServer(int server_id)
         {

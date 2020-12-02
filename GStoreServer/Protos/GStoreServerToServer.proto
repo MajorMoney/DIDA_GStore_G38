@@ -1,0 +1,31 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "GStoreServer";
+
+
+service PartitionMasterService {
+  rpc Lock (LockRequest) returns (LockAck);
+  rpc Unlock (UnlockRequest) returns (UnlockAck); 
+}
+message LockRequest {
+  int32 partitionID = 1;
+  int32 objectID=2;
+}
+
+message LockAck{ 
+  bool ack=1;
+}
+
+message UnlockRequest {
+  int32 partitionID = 1;
+  int32 objectID=2;
+  string newValue=3; 
+}
+
+message UnlockAck{ 
+ bool ack=1;
+}
+
+
+
+
