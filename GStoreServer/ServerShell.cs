@@ -29,12 +29,15 @@ namespace GStoreServer
 
         //Server Collections
         private Dictionary<int, List<int>> topologyMap;
-        private Dictionary<int, Dictionary<int, string>> objects; 
+        private Dictionary<int, Dictionary<int, string>> objects;
         private Dictionary<int, string> serverUrls;
         //Server other atributes
         public int ID { get; }
         private string hostname;
         private string puppet_hostname;//PM could be PCS
+        //for synchro
+        private AutoResetEvent gatekeeper;
+        private string writeKey = "dummy";
 
         //private ServerPort port;
         //private Server server;        
@@ -54,12 +57,12 @@ namespace GStoreServer
             objects = new Dictionary<int, Dictionary<int, string>>();
             serverUrls = new Dictionary<int, string>();
             this.puppet_hostname = puppet_hostname;
-
+            gatekeeper = new AutoResetEvent(false);
 
             //StartServerService(); 
             //
             //Thread.CurrentThread.Name = "MAIN";
-            Thread starter = new Thread(new ThreadStart(StartServerService));           
+            Thread starter = new Thread(new ThreadStart(StartServerService));
             starter.Name = "Starter";
             Thread setter = new Thread(new ThreadStart(Setup));
             setter.Name = "Setter";
@@ -68,7 +71,7 @@ namespace GStoreServer
             starter.Start();
             setter.Start();
             tester.Start();
-            Debug.WriteLine("Tester Started");
+            //Debug.WriteLine("Tester Started");
 
 
 
@@ -78,9 +81,9 @@ namespace GStoreServer
         //setup gets the system topology
         public async void Setup()
         {
-            Debug.WriteLine(Thread.CurrentThread.Name +" is going to sleep");
+            //Debug.WriteLine(Thread.CurrentThread.Name +" is going to sleep");
             Thread.Sleep(1000);//Mudar eventualmente
-            Debug.WriteLine(Thread.CurrentThread.Name + " just woke up");
+            //Debug.WriteLine(Thread.CurrentThread.Name + " just woke up");
             //channel setup
             using var channel = GrpcChannel.ForAddress(puppet_hostname);
             var puppetMasterService = new PuppetMasterService.PuppetMasterServiceClient(channel);
@@ -125,7 +128,6 @@ namespace GStoreServer
                     {
                         foreach (var o in reply.Objectos)
                         {
-                            Debug.WriteLine("Server"+this.ID+"  key  "+o.Key+"  value "+o.Value);
                             dic.Add(o.Key, o.Value);
                         }
                         objects.Add(reply.PartitionID, dic);
@@ -145,7 +147,7 @@ namespace GStoreServer
 
         private void StartServerService()
         {
-            Debug.WriteLine(Thread.CurrentThread.Name + " started");
+            //Debug.WriteLine(Thread.CurrentThread.Name + " started");
             string[] url = hostname.Split("//");
             string[] urlv2 = url[1].Split(':');
             ServerPort sp = new ServerPort(urlv2[0], Int32.Parse(urlv2[1]), ServerCredentials.Insecure);
@@ -163,59 +165,92 @@ namespace GStoreServer
 
         public string GetObjectValue(int pID, int objID)
         {
-         
-     
-            return objects[pID][objID];
+            string reply;
+            lock (objects[pID][objID])
+            {
+                reply = objects[pID][objID];
+            }
+            return reply;
         }
 
 
         internal bool Write(int partitionID, int objectID, string value)
         {
-            SendLock(partitionID, objectID);
-            objects[partitionID][objectID] = value;
-            Debug.WriteLine("Valor alterado");
-            //SendUnlock(partitionID, objectID, value);
-            return true;
+            lock (writeKey) 
+            {
+                Debug.WriteLine("teste");
+                SendLock(partitionID, objectID, value);
+                SendUnlock(partitionID, objectID, value);
+                return true;
+            }
 
         }
 
-        public void SendLock(int partitionID, int objectID)
+        public void SendLock(int partitionID, int objectID, string value)
         {
+            Thread locker = new Thread(async() =>
+            {
+                Thread.CurrentThread.Name = (DateTime.UtcNow.Millisecond.ToString());
+                Debug.WriteLine(Thread.CurrentThread.Name);
+                Monitor.Enter(objects[partitionID]);
+                gatekeeper.WaitOne();
+                objects[partitionID][objectID] = (string)value;
+                Debug.WriteLine("Valor alterado");
+                Debug.WriteLine(Thread.CurrentThread.Name);
+                Monitor.Exit(objects[partitionID]);
+                Debug.WriteLine("Valor Unlocked");
+            });
+            locker.Start();
             Parallel.ForEach<string>(serverUrls.Values, (url) =>
           {
-              using var channel = GrpcChannel.ForAddress(url);
-              var serverMasterService = new PartitionMasterService.PartitionMasterServiceClient(channel);
-              var ack = serverMasterService.Lock(new LockRequest { PartitionID = partitionID, ObjectID = objectID },
-              deadline: DateTime.UtcNow.AddSeconds(10));
+              if (!url.Equals(serverUrls[this.ID]))
+              {
+                  Debug.WriteLine("Lock sent for " + url);
+                  using var channel = GrpcChannel.ForAddress(url);
+                  var serverMasterService = new PartitionMasterService.PartitionMasterServiceClient(channel);
+                  var ack = serverMasterService.Lock(new LockRequest { PartitionID = partitionID, ObjectID = objectID ,Newvalue=value}
+                  //,                  deadline: DateTime.UtcNow.AddSeconds(10)
+                  );
+              }
           });
-            Debug.WriteLine("Lock sent");
+
         }
 
-        public void SendUnlock(int partitionID, int objectID,string newValue)
+        public void SendUnlock(int partitionID, int objectID, string newValue)
         {
             Parallel.ForEach<string>(serverUrls.Values, (url) =>
             {
-                using var channel = GrpcChannel.ForAddress(url);
-                var serverMasterService = new PartitionMasterService.PartitionMasterServiceClient(channel);
-                var ack = serverMasterService.Unlock(new UnlockRequest { PartitionID = partitionID, ObjectID = objectID,NewValue=newValue },
-                deadline: DateTime.UtcNow.AddSeconds(10));
+                if (!url.Equals(serverUrls[this.ID]))
+                {
+                    Debug.WriteLine("Unlock sent for " + url);
+                    using var channel = GrpcChannel.ForAddress(url);
+                    var serverMasterService = new PartitionMasterService.PartitionMasterServiceClient(channel);
+                    var ack = serverMasterService.Unlock(new UnlockRequest {Ok=true }
+                    //,                    deadline: DateTime.UtcNow.AddSeconds(10)
+                    );
+                }
             });
-            Debug.WriteLine("Unlock sent");
+            Unlock();
         }
 
-        public bool Lock(int pID,int objID)
+        public void Lock(int pID, int objID, string newValue)
         {
-            Monitor.Enter(objects[pID][objID]);
-            Debug.WriteLine("Server:"+ this.ID+"  has locked" + objects[pID][objID]);
-            return true;
+            Thread locker = new Thread(async () =>
+            {
+                Monitor.Enter(objects[pID]);
+                Debug.WriteLine("Server:" + this.ID + "  has locked" + objects[pID][objID]);
+                gatekeeper.WaitOne();
+                objects[pID][objID] = newValue;
+                Debug.WriteLine("Server:" + this.ID + "  Value overwritten");
+                Monitor.Exit(objects[pID]);
+                Debug.WriteLine("Server:" + this.ID + "  has unlocked with sucess");
+            });
+            locker.Start();
         }
 
-        public bool Unlock(int pID, int objID,string newValue)
+        public void Unlock()
         {
-            objects[pID][objID] = newValue;
-            Monitor.Exit(objects[pID][objID]);
-            Debug.WriteLine("Server:" + this.ID + "  has locked" + objects[pID][objID]);
-            return true;
+            gatekeeper.Set();
         }
 
         public void PuppetShutdown()
@@ -232,7 +267,7 @@ namespace GStoreServer
         private void Test()
         {
 
-            if (this.ID==1)
+            if (this.ID == 1)
             {
                 /*Debug.WriteLine(Thread.CurrentThread.Name + " is going to sleep");
                 Thread.Sleep(4000);

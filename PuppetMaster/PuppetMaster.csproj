@@ -6,23 +6,22 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="protos\GStorePuppetMaster.proto" />
-  </ItemGroup>
-
-
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.13.0" />
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.23.2" />
     <PackageReference Include="Grpc.Core" Version="2.33.1" />
     <PackageReference Include="Grpc.Net.Client" Version="2.33.1" />
+    <PackageReference Include="Grpc.Net.ClientFactory" Version="2.23.2" />
     <PackageReference Include="Grpc.Tools" Version="2.33.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-      <ProjectReference Include="..\GStoreClient\GStoreClient.csproj" />
-      <ProjectReference Include="..\GStoreServer\GStoreServer.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\GStoreClient\GStoreClient.csproj" />
+    <ProjectReference Include="..\GStoreServer\GStoreServer.csproj" />
+	  <Protobuf Include="protos\GStoreNodeService.proto" GrpcServices="Client" />
+	  <Protobuf Include="protos\GStorePuppetMaster.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>
@@ -40,8 +39,6 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <Protobuf Include="protos\GStorePuppetMaster.proto" GrpcServices="Server" />
-  </ItemGroup>
+
 
 </Project>

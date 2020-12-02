@@ -115,36 +115,29 @@ namespace GStoreClient
                     Debug.WriteLine("Client:" + this.ID + " Object ID:" + a );
                 }
             }*/
+
+
+            /*Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
+            TryAttach("http://localhost:8172");//5)
             
 
-           /**Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
-            Debug.WriteLine("5)");
-            TryAttach("http://localhost:8172");//5)
-            Debug.WriteLine("1)");
+            listServer(1);*/
+            Write(1, 2, "TESTEC");
             ReadLogic(1, 1, 1);//1)harcoded test
-            Thread.Sleep(500);
-            Debug.WriteLine("2)");
+            ReadLogic(1, 3, 2);//2)harcoded test
+            Write(1, 1, "TESTEB");
+            ReadLogic(1, 2, 1);//1)harcoded test
             ReadLogic(1, 1, 2);//2)harcoded test
-            Thread.Sleep(500);
-            Debug.WriteLine("3)");
-            ReadLogic(1, 1, -1);//3)harcoded test
-            Thread.Sleep(500);
-            Debug.WriteLine("4)");
+            Write(2, 2, "TESTEA");
+           /* ReadLogic(1, 1, -1);//3)harcoded test
             ReadLogic(1, 1, 3);//4)harcoded test  
-            Thread.Sleep(500);
-            Debug.WriteLine("6)");
-            ReadLogic(1, 1, 3);//6)harcoded test
-            Thread.Sleep(500);
-            Debug.WriteLine("7)");
-            ReadLogic(4, 1, 3);//7)harcoded test
-            Thread.Sleep(500);
-            Debug.WriteLine("8)");
-            ReadLogic(1, 5, -1);//8)harcoded test
 
-             listServer(3);
-            Write(1, 1, "TESTEA");
-            listServer(3);
-            listGlobal();**/
+            ReadLogic(1, 1, 3);//6)harcoded test
+            ReadLogic(4, 1, 3);//7)harcoded test
+            ReadLogic(1, 5, -1);//8)harcoded test    */       
+            //listGlobal();
+
+            listServer(1);
         }
 
 
