@@ -5,10 +5,17 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Protos\GStorePuppetMaster.proto" />
+    <None Remove="Protos\GStoreServerToClient.proto" />
+    <None Remove="Protos\GStoreServerToServer.proto" />
+  </ItemGroup>
+
  
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.13.0" />
+    <PackageReference Include="Grpc.AspNetCore.Server" Version="2.23.2" />
     <PackageReference Include="Grpc.Core" Version="2.33.1" />
     <PackageReference Include="Grpc.Net.Client" Version="2.33.1" />
     <PackageReference Include="Grpc.Net.ClientFactory" Version="2.23.2" />
@@ -17,11 +24,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <ProjectReference Include="..\Common\Common.csproj" />
-    <Protobuf Include="..\PuppetMaster\protos\GStorePuppetMaster.proto" GrpcServices="Client">
-      <Link>Protos\GStorePuppetMaster.proto</Link>
-    </Protobuf>
-	  <Protobuf Include="protos\GStoreServer.proto" GrpcServices="Server" />
-	  <Protobuf Include="protos\GStoreClient.proto" GrpcServices="Client" />
+    <Protobuf Include="Protos\GStorePuppetMaster.proto" GrpcServices="Client" />
+    <Protobuf Include="Protos\GStoreServerToClient.proto" GrpcServices="Server" />
+    <Protobuf Include="Protos\GStoreServerToServer.proto" GrpcServices="Both" />
   </ItemGroup>
 
 </Project>
