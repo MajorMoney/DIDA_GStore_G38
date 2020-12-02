@@ -135,10 +135,11 @@ namespace GStoreClient
             ReadLogic(4, 1, 3);//7)harcoded test
             Debug.WriteLine("8)");
             ReadLogic(1, 5, -1);//8)harcoded test
+            //OI
 
 
             listServer(3);
-
+            listGlobal();
         }
 
 
@@ -321,6 +322,21 @@ namespace GStoreClient
         }
         private void listGlobal()
         {
+            foreach(int i in serverUrls.Keys)
+            {
+                Debug.WriteLine("Server " + i + " at " + serverUrls[i]);
+                foreach(KeyValuePair < int, List<int>> part_server in topologyMap)
+                {
+                    if (part_server.Value.Contains(i))
+                    {//OI
+                        Debug.WriteLine("Partition " + part_server.Key + " :");
+                        foreach(int obj in objectsMap[part_server.Key]) {
+                            Debug.WriteLine("Object id: " + obj);
+                        }
+                    }
+                }
+
+            }
             Debug.WriteLine("listGlobal");
         }
 
