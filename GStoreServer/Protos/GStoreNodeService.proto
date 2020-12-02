@@ -1,0 +1,16 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "GStoreServer";
+
+
+service NodeToMasterService {
+  rpc Acknowledge (CheckUp) returns (Ack);
+
+}
+
+message CheckUp{
+ bool check=1;
+}
+message Ack{
+ bool Ack=1;
+}

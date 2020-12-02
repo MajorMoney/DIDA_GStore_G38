@@ -10,6 +10,7 @@ service PartitionMasterService {
 message LockRequest {
   int32 partitionID = 1;
   int32 objectID=2;
+  string newvalue=3;
 }
 
 message LockAck{ 
@@ -17,9 +18,7 @@ message LockAck{
 }
 
 message UnlockRequest {
-  int32 partitionID = 1;
-  int32 objectID=2;
-  string newValue=3; 
+ bool ok=1;
 }
 
 message UnlockAck{ 

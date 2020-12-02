@@ -1,0 +1,16 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "GStorePuppetMaster";
+
+
+service NodeToMasterService {
+  rpc Ackowledge (CheckUp) returns (Ack);
+
+}
+
+message CheckUp{
+ bool check=1;
+}
+message Ack{
+ bool Ack=1;
+}
