@@ -1,0 +1,35 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "GStoreClient";
+
+service AttachServerService {
+  rpc Attach (AttachRequest) returns (AttachReply);
+  rpc Read (ReadRequest) returns (ReadReply);
+  rpc Write (WriteRequest) returns (WriteReply);
+}
+
+message AttachRequest {
+bool ok =1;
+}
+message AttachReply {
+  bool ok = 1;
+}
+
+message ReadRequest {
+  int32 partitionID = 1;
+  int32 ObjectID = 2;
+}
+message ReadReply {
+  string value = 1;  
+}
+
+
+message WriteRequest {
+  int32 partitionID = 1;
+  int32 ObjectID = 2;
+  string value = 3;
+}
+message WriteReply {
+  int32 objID=1;
+  string value = 2;  
+}

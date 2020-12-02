@@ -1,0 +1,34 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "GStoreServer";
+
+
+service PuppetMasterService {
+  rpc GetObjects (PopulateRequest) returns (Objects);
+  rpc SetUp (SetUpRequest) returns (stream PartitionMap);
+}
+message SetUpRequest {
+  bool ok =1;
+}
+
+message PartitionMap{ 
+  int32 partitionID = 1;
+  map<int32, string> serverInfo = 2;
+  repeated int32 objectsID =3;
+}
+
+
+
+
+
+message PopulateRequest{
+	int32 partitionID = 1;
+}
+
+
+message Objects{
+	
+	int32 partitionID = 1;
+	map<int32, string> objectos = 2;	
+}
+
