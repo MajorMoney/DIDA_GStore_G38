@@ -40,7 +40,9 @@ namespace GStoreClient
         private int ID;
         private string hostname;
         private string puppet_hostname;//PM could be PCS
-
+        private ScriptReader scriptReader;
+        private Log logger;
+        private string script;
         //private readonly AttachServerService.AttachServerServiceClient client;
         private string attachedServerUrl;
         private GrpcChannel attachedServerChannel;
@@ -61,9 +63,9 @@ namespace GStoreClient
             objectsMap = new Dictionary<int, List<int>>();
             serverUrls = new Dictionary<int, string>();
             attachedServerUrl = null;
-            //methodList = this.methodsToList();
-
-            //
+            this.script = script;
+            scriptReader = new ScriptReader();
+            logger = new Log(string.Format("_log_{0}.txt", DateTime.Now.ToString("d-M-yyyy_H-mm")));
             Thread setter = new Thread(new ThreadStart(setup));
             setter.Start();
         }
@@ -115,36 +117,38 @@ namespace GStoreClient
                     Debug.WriteLine("Client:" + this.ID + " Object ID:" + a );
                 }
             }*/
-            
 
-           /**Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
-            Debug.WriteLine("5)");
-            TryAttach("http://localhost:8172");//5)
-            Debug.WriteLine("1)");
-            ReadLogic(1, 1, 1);//1)harcoded test
-            Thread.Sleep(500);
-            Debug.WriteLine("2)");
-            ReadLogic(1, 1, 2);//2)harcoded test
-            Thread.Sleep(500);
-            Debug.WriteLine("3)");
-            ReadLogic(1, 1, -1);//3)harcoded test
-            Thread.Sleep(500);
-            Debug.WriteLine("4)");
-            ReadLogic(1, 1, 3);//4)harcoded test  
-            Thread.Sleep(500);
-            Debug.WriteLine("6)");
-            ReadLogic(1, 1, 3);//6)harcoded test
-            Thread.Sleep(500);
-            Debug.WriteLine("7)");
-            ReadLogic(4, 1, 3);//7)harcoded test
-            Thread.Sleep(500);
-            Debug.WriteLine("8)");
-            ReadLogic(1, 5, -1);//8)harcoded test
 
+            /**Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
+             Debug.WriteLine("5)");
+             TryAttach("http://localhost:8172");//5)
+             Debug.WriteLine("1)");
+             ReadLogic(1, 1, 1);//1)harcoded test
+             Thread.Sleep(500);
+             Debug.WriteLine("2)");
+             ReadLogic(1, 1, 2);//2)harcoded test
+             Thread.Sleep(500);
+             Debug.WriteLine("3)");
+             ReadLogic(1, 1, -1);//3)harcoded test
+             Thread.Sleep(500);
+             Debug.WriteLine("4)");
+             ReadLogic(1, 1, 3);//4)harcoded test  
+             Thread.Sleep(500);
+             Debug.WriteLine("6)");
+             ReadLogic(1, 1, 3);//6)harcoded test
+             Thread.Sleep(500);
+             Debug.WriteLine("7)");
+             ReadLogic(4, 1, 3);//7)harcoded test
+             Thread.Sleep(500);
+             Debug.WriteLine("8)");
+             ReadLogic(1, 5, -1);//8)harcoded test
+
+              listServer(3);
+             Write(1, 1, "TESTEA");
              listServer(3);
-            Write(1, 1, "TESTEA");
-            listServer(3);
-            listGlobal();**/
+             listGlobal();
+            
+            readScript(script);**/
         }
 
 
@@ -205,12 +209,13 @@ namespace GStoreClient
 
         static void Main(string[] args)
         {
-            Log x = new Log("oi");
-            for(int i =0; i!=99;i++)
-            x.WriteLine("coninha");
+            /** Log x = new Log("oi");
+             for(int i =0; i!=99;i++)
+             x.WriteLine("coninha");
 
-            Thread.Sleep(5000);
-            x.close();
+             Thread.Sleep(5000);
+             x.close();**/
+            
             //ScriptReader x = new ScriptReader();
             //List<Tuple<MethodInfo, object[]>> queue = x.readScript(@"Scripts\client_script1");
             /**Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
@@ -379,14 +384,35 @@ namespace GStoreClient
 
         private void wait(int x)
         {
-            Debug.WriteLine("wait : " + x);
+            Debug.WriteLine("wait for: " + x +" - " +DateTime.Now.ToString("G"));
+
+            Thread.Sleep(x);
+            Debug.WriteLine("Stopped sleep at: " + DateTime.Now.ToString("G"));
+
         }
 
+        public void readScript(string path)
+        {
+            List<Tuple<MethodInfo, object[]>> queue = scriptReader.readScript(path);
 
-
-
+            for (int i = 0; i < queue.Count; i++)
+            {
+                if (queue[i].Item2 == null || queue[i].Item2.Length == 0)
+                {
+                    queue[i].Item1.Invoke(this, null);
+                }
+                else
+                {
+                    queue[i].Item1.Invoke(this, queue[i].Item2);
+                }                   
+            }
+            }
 
     }
+
+
+
 }
+
 
 

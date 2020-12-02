@@ -233,20 +233,20 @@ before reading and executing the next command in the script file.*/
 
         public void Test()
         {
-            //logger.WriteLine("amigos");
+            /**logger.WriteLine("amigos");
             //logger.close();
            // readScript(@"Scripts\pm_script1");
             
             //methodsToList();
             //readScript(@"Scripts\pm_script1");
-           /** this.Partition(repFactor,1, new int[] { 1, 2, 3 });
+            this.Partition(repFactor,1, new int[] { 1, 2, 3 });
             this.Partition(repFactor,2, new int[] { 1, 2, 3 });            
             this.Server(1, "http://localhost:8171", 1000, 3000);
             this.Server(2, "http://localhost:8172", 1000, 3000);
             this.Server(3, "http://localhost:8173", 1000, 3000);
             Thread.Sleep(1000);
-            this.Client(1, "http://localhost:8181", "script");
-        */}
+            this.Client(1, "http://localhost:8181", @"Scripts\client_script1");**/
+        }
 
         public void readScript(string path)
         {
@@ -267,14 +267,12 @@ before reading and executing the next command in the script file.*/
                         gui.WriteLine("Task has finished: " + t.ToString() + " : " + t.Status);
                     }
                     queue[i].Item1.Invoke(this, queue[i].Item2);
-                    //wwait for the tasks to finish
                 }
                 else
                 {
-                    if (queue[i].Item1.Name.ToLower().Equals("status"))
+                    if (queue[i].Item2 == null || queue[i].Item2.Length == 0)
                     {
-                        Debug.WriteLine("statius");
-                        Task t = new Task(() => this.Status());
+                        Task t = new Task(() => queue[i].Item1.Invoke(this, null));
                         t.Start();
                         tasks.Add(t);
                     }
