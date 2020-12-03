@@ -136,7 +136,7 @@ namespace PuppetMaster
             {
                 using var channel = GrpcChannel.ForAddress(url);
                 var serverNodeService = new NodeServerService.NodeServerServiceClient(channel);
-                var ack = serverNodeService.Acknoledge(new SCheckUp  { Check = true });
+                var ack = serverNodeService.Acknoledge(new CheckUp  { Check = true });
                 channel.Dispose();
             });           
         }
@@ -236,7 +236,12 @@ them until the PuppetMaster “unfreezes” it.
 
         public async void Freeze(int server_id)
         {
-
+            var  url = servers[server_id];
+            using var channel = GrpcChannel.ForAddress(url);
+            var serverNodeService = new NodeServerService.NodeServerServiceClient(channel);
+            var reply = serverNodeService.Freeze(new FreezeRequest { Check = true});
+            channel.Dispose();
+            Debug.WriteLine(server_id+" Frozen" );
         }
 
         /* This command is used to put a process back to normal operation. Pending messages that were received while the process was frozen, should be
@@ -244,7 +249,12 @@ processed when this command is received.*/
 
         public async void Unfreeze(int server_id)
         {
-
+            var url = servers[server_id];
+            using var channel = GrpcChannel.ForAddress(url);
+            var serverNodeService = new NodeServerService.NodeServerServiceClient(channel);
+            var reply = serverNodeService.Unfreeze(new UnfreezeRequest { Check = true });
+            channel.Dispose();
+            Debug.WriteLine(server_id + " Unrozen");
         }
 
         /*This command instructs the PuppetMaster to sleep for x milliseconds
@@ -269,12 +279,17 @@ before reading and executing the next command in the script file.*/
             Server(1, "http://localhost:8171", 1000, 3000);
             Server(2, "http://localhost:8172", 1000, 3000);
             Server(3, "http://localhost:8173", 1000, 3000);
+            Thread.Sleep(500);
             SendServerSetup();
-            Thread.Sleep(1000);
+            Thread.Sleep(500);
             Client(1, "http://localhost:8181", "script");
             Thread.Sleep(10);
             Client(2, "http://localhost:8182", "script");
+            Freeze(1);
             Client(3, "http://localhost:8182", "script");
+            Thread.Sleep(3000);
+            Unfreeze(1);
+
         }
 
         public void readScript(string path)

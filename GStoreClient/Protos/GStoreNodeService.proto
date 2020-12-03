@@ -5,7 +5,7 @@ option csharp_namespace = "GStoreClient";
 
 service NodeClientService {
   rpc Acknoledge (CCheckUp) returns (CAck);
-
+  //rpc Status (ClientStatusRequest) returns (ClientStatusRequest);
 }
 
 message CCheckUp{
