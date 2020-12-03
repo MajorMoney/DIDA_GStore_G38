@@ -6,6 +6,11 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="protos\GStoreNodeServiceClient.proto" />
+    <None Remove="protos\GStoreNodeServiceServer.proto" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.13.0" />
@@ -20,8 +25,9 @@
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\GStoreClient\GStoreClient.csproj" />
     <ProjectReference Include="..\GStoreServer\GStoreServer.csproj" />
-	  <Protobuf Include="protos\GStoreNodeService.proto" GrpcServices="Client" />
-	  <Protobuf Include="protos\GStorePuppetMaster.proto" GrpcServices="Server" />
+    <Protobuf Include="protos\GStoreNodeServiceClient.proto" GrpcServices="Client" />
+    <Protobuf Include="protos\GStoreNodeServiceServer.proto" GrpcServices="Client" />
+	 <Protobuf Include="protos\GStorePuppetMaster.proto" GrpcServices="Server" />
   </ItemGroup>
 
   <ItemGroup>

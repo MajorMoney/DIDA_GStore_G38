@@ -17,7 +17,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <ProjectReference Include="..\Common\Common.csproj" />
-    <Protobuf Include="Protos\GStoreNodeService.proto" GrpcServices="Server" />
+    <Protobuf Include="Protos\GStoreNodeService.proto" GrpcServices="Server" Access="Internal" />
     <Protobuf Include="Protos\GStorePuppetMaster.proto" GrpcServices="Client" />
     <Protobuf Include="Protos\GStoreServerToClient.proto" GrpcServices="Client" />
   </ItemGroup>
