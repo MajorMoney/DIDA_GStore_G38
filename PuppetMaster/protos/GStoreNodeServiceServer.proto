@@ -4,13 +4,37 @@ option csharp_namespace = "PuppetMaster";
 
 
 service NodeServerService {
-  rpc Acknoledge (SCheckUp) returns (SAck);
-
+  rpc Acknoledge (CheckUp) returns (SetUpAck);
+  rpc Freeze (FreezeRequest) returns (FreezeReply);
+  rpc Unfreeze (UnfreezeRequest) returns (UnfreezeReply);
+  rpc Crash (CrashRequest) returns (CrashReply);
+  //rpc Status (ServerStatusRequest) returns (ServerStatusRequest);
 }
 
-message SCheckUp{
+message CheckUp{
  bool check=1;
 }
-message SAck{
+message SetUpAck{
+ bool ack=1;
+}
+
+message FreezeRequest{
+ bool check=1;
+}
+message FreezeReply{
+ bool ack=1;
+}
+
+message UnfreezeRequest{
+ bool check=1;
+}
+message UnfreezeReply{
+ bool ack=1;
+}
+
+message CrashRequest{
+ bool check=1;
+}
+message CrashReply{
  bool ack=1;
 }

@@ -1,6 +1,7 @@
 ﻿using Common;
 using Grpc.Core;
 using Grpc.Net.Client;
+using GStoreClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -68,6 +69,23 @@ namespace GStoreClient
             setter.Start();
         }
 
+        private void StartClientNodeService()
+        {
+            //Debug.WriteLine(Thread.CurrentThread.Name + " started");
+            string[] url = hostname.Split("//");
+            string[] urlv2 = url[1].Split(':');
+            ServerPort sp = new ServerPort(urlv2[0], Int32.Parse(urlv2[1]), ServerCredentials.Insecure);
+            Server server = new Server
+            {
+                Services ={ NodeClientService.BindService(new CNodeService(this))},
+                Ports = { sp }
+            };
+            server.Start();
+            Debug.WriteLine("Client" + this.ID + "-->serving on adress:");
+            Debug.WriteLine("host-   " + sp.Host + "  Port-  " + sp.Port);
+            //while (true) ;
+        }
+
 
         //setup gets the system topology
         public async void setup()
@@ -122,6 +140,7 @@ namespace GStoreClient
             
 
             listServer(1);*/
+            listServer(1);
             Write(1, 2, "TESTEC");
             ReadLogic(1, 1, 1);//1)harcoded test
             ReadLogic(1, 3, 2);//2)harcoded test
@@ -138,6 +157,7 @@ namespace GStoreClient
             //listGlobal();
             Thread.Sleep(2000);
             listServer(1);
+
         }
 
 

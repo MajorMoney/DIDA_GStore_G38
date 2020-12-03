@@ -33,12 +33,15 @@ namespace GStoreServer
         private Dictionary<int, Dictionary<int, string>> objects;
         private Dictionary<int, string> serverUrls;
         private ConcurrentQueue<Task> writeRequests;
+        //private ConcurrentQueue<Task> readRequests;
         //Server other atributes
         public int ID { get; }
         private string hostname;
         private string puppet_hostname;//PM could be PCS
+        private bool isFrozen;
         //for synchro
         private AutoResetEvent gatekeeper;
+        private ManualResetEventSlim frozen;
         private string writeKey = "dummy";
 
         //private ServerPort port;
@@ -47,7 +50,14 @@ namespace GStoreServer
 
 
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="server_url"></param>
+        /// <param name="puppet_hostname"></param>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
         public ServerShell(int id, string server_url, string puppet_hostname, int min, int max)
         {
             AppContext.SetSwitch(
@@ -60,7 +70,10 @@ namespace GStoreServer
             serverUrls = new Dictionary<int, string>();
             this.puppet_hostname = puppet_hostname;
             gatekeeper = new AutoResetEvent(false);
+            frozen = new ManualResetEventSlim(false);
             writeRequests = new ConcurrentQueue<Task>();
+            //readRequests = new ConcurrentQueue<Task>();
+            isFrozen = false;
 
             //StartServerService(); 
             //
@@ -85,16 +98,27 @@ namespace GStoreServer
         }
 
 
+        //#############-----Begin SetUp/Start Block Functions/Methods-----#############//
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public bool Setuper()
         {
             Setup();
+            Debug.WriteLine("SetUper Done");
             return true;
         }
+
         //setup gets the system topology
+        /// <summary>
+        /// 
+        /// </summary>
         private async void Setup()
         {
             //Debug.WriteLine(Thread.CurrentThread.Name +" is going to sleep");
-            Thread.Sleep(1000);//Mudar eventualmente
             //Debug.WriteLine(Thread.CurrentThread.Name + " just woke up");
             //channel setup
             using var channel = GrpcChannel.ForAddress(puppet_hostname);
@@ -122,10 +146,17 @@ namespace GStoreServer
                     }
                 }
             }
-            //Debug.WriteLine("Sever:"+this.ID+" Got its topologyMap");
-             GetObjects(puppetMasterService);
+            Debug.WriteLine("SetUp Done");
+            GetObjects(puppetMasterService);
         }
+
+
+
         //GetObjects will get the keys and values from the partitions replicated in this server
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="puppetMasterService"></param>
         private void GetObjects(PuppetMasterService.PuppetMasterServiceClient puppetMasterService)
         {
             //Debug.WriteLine("Sever:" + this.ID + " has Sent GetObjects Request");
@@ -146,9 +177,12 @@ namespace GStoreServer
                     }
                 }
             }
+            Debug.WriteLine("GetObjects Done");
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
         private void StartServerService()
         {
             //Debug.WriteLine(Thread.CurrentThread.Name + " started");
@@ -171,47 +205,104 @@ namespace GStoreServer
         }
 
 
+        //#############-----End SetUp/Start Block Functions/Methods-----#############//
+        //#############-----Begin Read Requests handler Block Functions/Methods-----#############//
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pID"></param>
+        /// <param name="objID"></param>
+        /// <returns></returns>
         public string GetObjectValue(int pID, int objID)
         {
+            if (isFrozen)
+            {
+                frozen.Wait();
+               
+            }
             string reply;
             lock (objects[pID][objID])
             {
                 reply = objects[pID][objID];
             }
             return reply;
+
         }
 
+        /*private void ReadEnqueue(int partitionID, int objectID)
+        {
+            readRequests.Enqueue(new Task(() =>
+            {
+                GetObjectValue(partitionID, objectID);
+            }));
+        }*/
 
+
+
+        //#############-----End Read Requests handler Block Functions/Methods-----#############//
+        //#############-----Begin Write Requests handler Block Functions/Methods-----#############//
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="partitionID"></param>
+        /// <param name="objectID"></param>
+        /// <param name="value"></param>
+        /// 
         internal void Write(int partitionID, int objectID, string value)
         {
-
-            if (Monitor.TryEnter(writeKey))
+            if (!isFrozen)
             {
-                try
+
+                if (Monitor.TryEnter(writeKey))
                 {
-                    SendLock(partitionID, objectID, value);
-                    SendUnlock(partitionID, objectID, value);
+                    try
+                    {
+                        SendLock(partitionID, objectID, value);
+                        SendUnlock(partitionID, objectID, value);
+                    }
+                    finally
+                    {
+                        Monitor.Exit(writeKey);
+                        WriteDequeue();
+                       
+                    }
                 }
-                finally
+                else
                 {
-                    Monitor.Exit(writeKey);
-                    Task task;
-                    writeRequests.TryDequeue(out task);
-                    if (writeRequests.Count != 0)
-                        task.Start();
+                    WriteEnqueue(partitionID, objectID, value);
                 }
             }
             else
             {
-                writeRequests.Enqueue(new Task(() =>
-               {
-                   Write(partitionID, objectID, value);
-               }));
+                WriteEnqueue(partitionID, objectID, value);
             }
 
         }
 
+        private void WriteEnqueue(int partitionID, int objectID, string value)
+        {
+            writeRequests.Enqueue(new Task(() =>
+            {
+                Write(partitionID, objectID, value);
+            }));
+        }
+
+        private void WriteDequeue()
+        {
+            Task task;
+            writeRequests.TryDequeue(out task);
+            if (writeRequests.Count != 0)
+                task.Start();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="partitionID"></param>
+        /// <param name="objectID"></param>
+        /// <param name="value"></param>
         public void SendLock(int partitionID, int objectID, string value)
         {
             Thread locker = new Thread(() =>
@@ -236,7 +327,12 @@ namespace GStoreServer
           });
 
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="partitionID"></param>
+        /// <param name="objectID"></param>
+        /// <param name="newValue"></param>
         public void SendUnlock(int partitionID, int objectID, string newValue)
         {
             Parallel.ForEach<string>(serverUrls.Values, (url) =>
@@ -254,6 +350,13 @@ namespace GStoreServer
             Unlock();
         }
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pID"></param>
+        /// <param name="objID"></param>
+        /// <param name="newValue"></param>
         public void Lock(int pID, int objID, string newValue)
         {
             Thread locker = new Thread(() =>
@@ -266,10 +369,37 @@ namespace GStoreServer
             locker.Start();
         }
 
+
+
+        /// <summary>
+        /// 
+        /// </summary>
         public void Unlock()
         {
             gatekeeper.Set();
         }
+
+
+        //#############-----End Write Block Functions/Methods-----#############//
+
+        //#############-----Begin PuppetMaster Requests Handlers Block Functions/Methods-----#############//
+
+        public void Freeze() 
+        {
+            isFrozen = true;
+        }
+
+        public void Unfreeze()
+        {
+            isFrozen = false;
+            frozen.Set();
+            WriteDequeue();
+        }
+
+        //#############-----End PuppetMaster Requests Handlers Functions/Methods-----#############//
+
+
+
 
         public void PuppetShutdown()
         {
