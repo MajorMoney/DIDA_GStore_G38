@@ -1,6 +1,6 @@
 ﻿syntax = "proto3";
 
-option csharp_namespace = "GStoreServer";
+option csharp_namespace = "PuppetMaster";
 
 
 service NodeServerService {

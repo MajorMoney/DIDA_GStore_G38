@@ -129,14 +129,14 @@ namespace GStoreClient
             ReadLogic(1, 2, 1);//1)harcoded test
             ReadLogic(1, 1, 2);//2)harcoded test
             Write(2, 2, "TESTEA");
-           /* ReadLogic(1, 1, -1);//3)harcoded test
-            ReadLogic(1, 1, 3);//4)harcoded test  
+            /* ReadLogic(1, 1, -1);//3)harcoded test
+             ReadLogic(1, 1, 3);//4)harcoded test  
 
-            ReadLogic(1, 1, 3);//6)harcoded test
-            ReadLogic(4, 1, 3);//7)harcoded test
-            ReadLogic(1, 5, -1);//8)harcoded test    */       
+             ReadLogic(1, 1, 3);//6)harcoded test
+             ReadLogic(4, 1, 3);//7)harcoded test
+             ReadLogic(1, 5, -1);//8)harcoded test    */
             //listGlobal();
-
+            Thread.Sleep(2000);
             listServer(1);
         }
 

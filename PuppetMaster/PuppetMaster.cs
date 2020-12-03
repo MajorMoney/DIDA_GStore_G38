@@ -44,6 +44,7 @@ namespace PuppetMaster
         private PuppetMasterGUI gui;
         private ScriptReader scriptReader;
         private Log logger;
+
         public PuppetMaster(PuppetMasterGUI  gi)
         {
 
@@ -128,6 +129,29 @@ namespace PuppetMaster
             }
             return temp;
         }
+
+        public void SendServerSetup()
+        {
+            Parallel.ForEach<string>(servers.Values,  (url) =>
+            {
+                using var channel = GrpcChannel.ForAddress(url);
+                var serverNodeService = new NodeServerService.NodeServerServiceClient(channel);
+                var ack = serverNodeService.Acknoledge(new SCheckUp  { Check = true });
+                channel.Dispose();
+            });           
+        }
+
+        public void SendClientSetup()
+        {
+            Parallel.ForEach<string>(servers.Values, (url) =>
+            {
+                using var channel = GrpcChannel.ForAddress(url);
+                var clientNodeService = new NodeClientService.NodeClientServiceClient(channel);
+                var ack = clientNodeService.Acknoledge(new CCheckUp { Check = true });
+                channel.Dispose();
+            });
+        }
+
 
         ////////Creation Commands////////
 
@@ -245,6 +269,7 @@ before reading and executing the next command in the script file.*/
             Server(1, "http://localhost:8171", 1000, 3000);
             Server(2, "http://localhost:8172", 1000, 3000);
             Server(3, "http://localhost:8173", 1000, 3000);
+            SendServerSetup();
             Thread.Sleep(1000);
             Client(1, "http://localhost:8181", "script");
             Thread.Sleep(10);
