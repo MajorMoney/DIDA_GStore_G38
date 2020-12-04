@@ -46,7 +46,7 @@ namespace GStoreServer
         private string writeKey = "dummy";
 
         //private ServerPort port;
-        //private Server server;        
+        private Server server;        
 
 
 
@@ -204,6 +204,7 @@ namespace GStoreServer
                 Ports = { sp }
             };
             server.Start();
+            this.server = server;
             Debug.WriteLine("Server" + this.ID + "-->serving on adress:");
             Debug.WriteLine("host-   " + sp.Host + "  Port-  " + sp.Port);
             //while (true) ;
@@ -250,7 +251,14 @@ namespace GStoreServer
                 }
                 else
                 {
-                    SendRead(pID, objID, clientUrl);
+                    try
+                    {
+                        SendRead(pID, objID, clientUrl);
+                    }
+                    catch(Exception e)
+                    {
+
+                    }
                 }
             }
             return reply;
@@ -258,16 +266,19 @@ namespace GStoreServer
 
         private void SendRead(int pID, int objID, string clientUrl)
         {
-            using var channel = GrpcChannel.ForAddress(clientUrl);
-            var service = new ClientService.ClientServiceClient(channel);
-            lock (lockers[pID][objID])
+            Task t = new Task(() =>
             {
-                var reply = service.ReadValue(new ValueNotification()
+                using var channel = GrpcChannel.ForAddress(clientUrl);
+                var service = new ClientService.ClientServiceClient(channel);
+                lock (lockers[pID][objID])
                 {
-                    Value = objects[pID][objID]
-                });
-            }
-            channel.Dispose();
+                    var reply = service.ReadValue(new ValueNotification()
+                    {
+                        Value = objects[pID][objID]
+                    });
+                }
+                channel.Dispose();
+            });
         }
 
         private void ReadEnqueue(int partitionID, int objectID, string clientUrl)
@@ -280,12 +291,15 @@ namespace GStoreServer
 
         private void ReadDequeue()
         {
-            if (readRequests.Count != 0)
+            Parallel.ForEach<Task>(readRequests, (task) =>
             {
-                Task task;
-                readRequests.TryDequeue(out task);
-                task.Start();
-            }
+                if (readRequests.Count != 0)
+                {
+                    readRequests.TryDequeue(out task);
+                    task.Start();
+                }
+            });
+          
         }
 
 
@@ -324,7 +338,6 @@ namespace GStoreServer
                 else
                 {
                     WriteEnqueue(partitionID, objectID, value);
-                    Debug.WriteLine("Added one");
                 }
             }
             else
@@ -517,6 +530,11 @@ namespace GStoreServer
         public void PuppetShutdown()
         {
             // puppet_master_server.ShutdownAsync().Wait();
+        }
+
+        public void Crash()
+        {
+            server.KillAsync();
         }
 
         static void Main(string[] args)

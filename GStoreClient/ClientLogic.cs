@@ -36,7 +36,7 @@ namespace GStoreClient
         private Dictionary<int, List<int>> topologyMap;
         private Dictionary<int, List<int>> objectsMap;
         private Dictionary<int, string> serverUrls;
-        private Dictionary<string, MethodInfo> methodList; 
+        private Dictionary<string, MethodInfo> methodList;
         //Client other atributes
         private int ID;
         private string hostname;
@@ -67,7 +67,7 @@ namespace GStoreClient
             //
             Thread setter = new Thread(new ThreadStart(setup));
             Thread starter = new Thread(new ThreadStart(StartClientNodeService));
-            setter.IsBackground=true;
+            setter.IsBackground = true;
             starter.IsBackground = true;
             setter.Start();
             starter.Start();
@@ -81,7 +81,7 @@ namespace GStoreClient
             ServerPort sp = new ServerPort(urlv2[0], Int32.Parse(urlv2[1]), ServerCredentials.Insecure);
             Server server = new Server
             {
-                Services ={ NodeClientService.BindService(new CNodeService(this))},
+                Services = { NodeClientService.BindService(new CNodeService(this)) },
                 Ports = { sp }
             };
             Debug.WriteLine("host-   " + sp.Host + "  Port-  " + sp.Port);
@@ -146,21 +146,18 @@ namespace GStoreClient
             listServer(1);*/
 
             //listServer(1); liste«server está com problemas
-            ReadLogic(1, 1, 1);//1)harcoded test
-            ReadLogic(1, 3, 2);//2)harcoded test
-            Thread.Sleep(2000);
-            Write(1, 2, "TESTEC");
             Write(3, 2, "TESTEC");
 
             ReadLogic(1, 1, -1);//3)harcoded test
-             ReadLogic(1, 1, 3);//4)harcoded test  
-            Write(2, 3, "TESTET");
-            ReadLogic(1, 1, 3);//6)harcoded test
-             ReadLogic(4, 1, 3);//7)harcoded test
-             ReadLogic(1, 5, -1);//8)harcoded test    */
+            ReadLogic(1, 1, 3);//4)harcoded test 
+            ReadLogic(2, 1, 3);//6)harcoded test
+            Write(2, 3, "TESTE");
+            ReadLogic(2, 1, 3);//6)harcoded test
+            ReadLogic(3, 1, 3);//6)harcoded test
+
             //listGlobal();
-         
-            //listServer(1);
+            Thread.Sleep(5000);
+            listServer(this.ID);
 
         }
 
@@ -223,8 +220,8 @@ namespace GStoreClient
         static void Main(string[] args)
         {
             Log x = new Log("oi");
-            for(int i =0; i!=99;i++)
-            x.WriteLine("coninha");
+            for (int i = 0; i != 99; i++)
+                x.WriteLine("coninha");
 
             Thread.Sleep(5000);
             x.close();
@@ -244,7 +241,7 @@ namespace GStoreClient
         //problema de recursividade,infinite while loop, mudar eventualmente
         private string ReadLogic(int partition_id, int object_id, int server_id)
         {
-            string res=null;
+            string res = null;
 
             if (!topologyMap.ContainsKey(partition_id) || !objectsMap[partition_id].Contains(object_id))
             {
@@ -259,12 +256,12 @@ namespace GStoreClient
                 //attached server has the object
                 if (topologyMap[partition_id].Contains(attachedServerID))
                 {
-                 res=   Read(partition_id, object_id);///////////////////////////È preciso alterar isto
+                    res = Read(partition_id, object_id);
                 }
                 else if (server_id != -1)
                 {
                     TryAttach(serverUrls[server_id]);
-                  res=  ReadLogic(partition_id, object_id, server_id);
+                    res = ReadLogic(partition_id, object_id, server_id);
                 }
                 else
                 {
@@ -278,7 +275,7 @@ namespace GStoreClient
                 //Client will try to attach to the given ID
                 TryAttach(serverUrls[server_id]);
                 res = ReadLogic(partition_id, object_id, server_id);
-
+                Debug.WriteLine("1");
             }
             else
             {
@@ -297,8 +294,8 @@ namespace GStoreClient
             {
                 PartitionID = partition_id,
                 ObjectID = object_id,
-                ClientUrl=this.hostname
-                
+                ClientUrl = this.hostname
+
             });
             if (reply.HasValue)
             {
@@ -331,7 +328,7 @@ namespace GStoreClient
                 {
                     PartitionID = partition_id,
                     ObjectID = object_id,
-                    Value=value
+                    Value = value
                 });
                 Debug.WriteLine("-3");
 
@@ -348,7 +345,7 @@ namespace GStoreClient
         {
             List<int> partitions = new List<int>();
             Dictionary<int, int[]> toRead = new Dictionary<int, int[]>();
-            
+
             foreach (KeyValuePair<int, List<int>> kvp in topologyMap)
             {
                 if (kvp.Value.Contains(server_id))
@@ -357,7 +354,7 @@ namespace GStoreClient
                     Debug.WriteLine("Partition to check: " + kvp.Key);
                 }
             }
-            List<Tuple<int,Tuple<int,string>>> list = new List<Tuple<int, Tuple<int, string>>>(); 
+            List<Tuple<int, Tuple<int, string>>> list = new List<Tuple<int, Tuple<int, string>>>();
             foreach (int i in partitions)
             {
                 foreach (int z in objectsMap[i])
@@ -368,12 +365,13 @@ namespace GStoreClient
                     list.Add(partition_object);
                 }
             }
-            Debug.WriteLine("Contents in server " + server_id +" :");
-            
+            Debug.WriteLine("Contents in server " + server_id + " :");
+
             int init = list[0].Item1;
             Debug.WriteLine("Partition " + init);
 
-            foreach (Tuple<int, Tuple<int, string>> x in list) {
+            foreach (Tuple<int, Tuple<int, string>> x in list)
+            {
 
                 if (x.Item1 == init)
                 {
@@ -390,20 +388,21 @@ namespace GStoreClient
                 }
 
             }
-            
+
 
         }
         private void listGlobal()
         {
-            foreach(int i in serverUrls.Keys)
+            foreach (int i in serverUrls.Keys)
             {
                 Debug.WriteLine("Server " + i + " at " + serverUrls[i]);
-                foreach(KeyValuePair < int, List<int>> part_server in topologyMap)
+                foreach (KeyValuePair<int, List<int>> part_server in topologyMap)
                 {
                     if (part_server.Value.Contains(i))
                     {
                         Debug.WriteLine("Partition " + part_server.Key + " :");
-                        foreach(int obj in objectsMap[part_server.Key]) {
+                        foreach (int obj in objectsMap[part_server.Key])
+                        {
                             Debug.WriteLine("Object id: " + obj);
                         }
                     }

@@ -21,7 +21,7 @@ message ReadRequest {
   string clientUrl =3;
 }
 message ReadReply {
-  bool hasValue = 1;  
+  bool hasValue = 1;
   string value=2;
 }
 

@@ -5,10 +5,6 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Protos\GStoreClientToServer.proto" />
-  </ItemGroup>
-
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.13.0" />
