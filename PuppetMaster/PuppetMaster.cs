@@ -44,6 +44,7 @@ namespace PuppetMaster
         private PuppetMasterGUI gui;
         private ScriptReader scriptReader;
         private Log logger;
+
         public PuppetMaster(PuppetMasterGUI  gi)
         {
 
@@ -129,6 +130,29 @@ namespace PuppetMaster
             return temp;
         }
 
+        public void SendServerSetup()
+        {
+            Parallel.ForEach<string>(servers.Values,  (url) =>
+            {
+                using var channel = GrpcChannel.ForAddress(url);
+                var serverNodeService = new NodeServerService.NodeServerServiceClient(channel);
+                var ack = serverNodeService.Acknoledge(new CheckUp  { Check = true });
+                channel.Dispose();
+            });           
+        }
+
+        public void SendClientSetup()
+        {
+            Parallel.ForEach<string>(servers.Values, (url) =>
+            {
+                using var channel = GrpcChannel.ForAddress(url);
+                var clientNodeService = new NodeClientService.NodeClientServiceClient(channel);
+                var ack = clientNodeService.Acknoledge(new CCheckUp { Check = true });
+                channel.Dispose();
+            });
+        }
+
+
         ////////Creation Commands////////
 
         public async void ReplicationFactor(int r)// configures the system to replicate partitions on r servers
@@ -160,13 +184,14 @@ server ids server id 1 to serverd id r.*/
 
         public async void Partition(int r,int partition_ID, params int[] servers_ids)
         {
-            Debug.WriteLine("Partition Error: " + r + " ; " + partition_ID + " " + servers_ids);
+            //Debug.WriteLine("Partition Error: " + r + " ; " + partition_ID + " " + servers_ids);
             
 
             Partition partition = new Partition(r, partition_ID, servers_ids);
             bool x =partitions.TryAdd(partition_ID, partition);
             //partitions.Add(partition_ID, partition);
-            gui.WriteLine("Partition:" + x);        }
+            //gui.WriteLine("Partition:" + x);       
+        }
 
         /* This command creates a client process
 identified by the string username, available at client URL and that will execute the
@@ -211,7 +236,12 @@ them until the PuppetMaster “unfreezes” it.
 
         public async void Freeze(int server_id)
         {
-
+            var  url = servers[server_id];
+            using var channel = GrpcChannel.ForAddress(url);
+            var serverNodeService = new NodeServerService.NodeServerServiceClient(channel);
+            var reply = serverNodeService.Freeze(new FreezeRequest { Check = true});
+            channel.Dispose();
+            Debug.WriteLine(server_id+" Frozen" );
         }
 
         /* This command is used to put a process back to normal operation. Pending messages that were received while the process was frozen, should be
@@ -219,7 +249,12 @@ processed when this command is received.*/
 
         public async void Unfreeze(int server_id)
         {
-
+            var url = servers[server_id];
+            using var channel = GrpcChannel.ForAddress(url);
+            var serverNodeService = new NodeServerService.NodeServerServiceClient(channel);
+            var reply = serverNodeService.Unfreeze(new UnfreezeRequest { Check = true });
+            channel.Dispose();
+            Debug.WriteLine(server_id + " Unrozen");
         }
 
         /*This command instructs the PuppetMaster to sleep for x milliseconds
@@ -239,13 +274,22 @@ before reading and executing the next command in the script file.*/
             
             //methodsToList();
             //readScript(@"Scripts\pm_script1");
-            this.Partition(repFactor,1, new int[] { 1, 2, 3 });
-            this.Partition(repFactor,2, new int[] { 1, 2, 3 });            
-            this.Server(1, "http://localhost:8171", 1000, 3000);
-            this.Server(2, "http://localhost:8172", 1000, 3000);
-            this.Server(3, "http://localhost:8173", 1000, 3000);
-            Thread.Sleep(1000);
-            this.Client(1, "http://localhost:8181", @"Scripts\client_script1");**/
+            Partition(repFactor,1, new int[] { 1, 2, 3 });
+            Partition(repFactor,2, new int[] { 1, 2, 3 });            
+            Server(1, "http://localhost:8171", 1000, 3000);
+            Server(2, "http://localhost:8172", 1000, 3000);
+            Server(3, "http://localhost:8173", 1000, 3000);
+            Thread.Sleep(500);
+            SendServerSetup();
+            Thread.Sleep(500);
+            Client(1, "http://localhost:8181", "script");
+            Thread.Sleep(10);
+            Client(2, "http://localhost:8182", "script");
+            Freeze(1);
+            Client(3, "http://localhost:8182", "script");
+            Thread.Sleep(3000);
+            Unfreeze(1);
+
         }
 
         public void readScript(string path)

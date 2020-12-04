@@ -30,7 +30,6 @@ message WriteRequest {
   string value = 3;
 }
 message WriteReply {
-  int32 objID=1;
-  string value = 2;  
+  bool ack=1;
 }
 

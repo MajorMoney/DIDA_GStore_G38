@@ -1,0 +1,16 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "PuppetMaster";
+
+
+service NodeClientService {
+  rpc Acknoledge (CCheckUp) returns (CAck);
+
+}
+
+message CCheckUp{
+ bool check=1;
+}
+message CAck{
+ bool ack=1;
+}

@@ -1,6 +1,4 @@
-﻿using GStoreClient;
-using GStoreServer;//temporário para teste
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;

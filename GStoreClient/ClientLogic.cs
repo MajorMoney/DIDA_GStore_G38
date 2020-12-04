@@ -1,6 +1,7 @@
 ﻿using Common;
 using Grpc.Core;
 using Grpc.Net.Client;
+using GStoreClient.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -70,6 +71,23 @@ namespace GStoreClient
             setter.Start();
         }
 
+        private void StartClientNodeService()
+        {
+            //Debug.WriteLine(Thread.CurrentThread.Name + " started");
+            string[] url = hostname.Split("//");
+            string[] urlv2 = url[1].Split(':');
+            ServerPort sp = new ServerPort(urlv2[0], Int32.Parse(urlv2[1]), ServerCredentials.Insecure);
+            Server server = new Server
+            {
+                Services ={ NodeClientService.BindService(new CNodeService(this))},
+                Ports = { sp }
+            };
+            server.Start();
+            Debug.WriteLine("Client" + this.ID + "-->serving on adress:");
+            Debug.WriteLine("host-   " + sp.Host + "  Port-  " + sp.Port);
+            //while (true) ;
+        }
+
 
         //setup gets the system topology
         public async void setup()
@@ -119,36 +137,29 @@ namespace GStoreClient
             }*/
 
 
-            /**Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
-             Debug.WriteLine("5)");
-             TryAttach("http://localhost:8172");//5)
-             Debug.WriteLine("1)");
-             ReadLogic(1, 1, 1);//1)harcoded test
-             Thread.Sleep(500);
-             Debug.WriteLine("2)");
-             ReadLogic(1, 1, 2);//2)harcoded test
-             Thread.Sleep(500);
-             Debug.WriteLine("3)");
-             ReadLogic(1, 1, -1);//3)harcoded test
-             Thread.Sleep(500);
-             Debug.WriteLine("4)");
-             ReadLogic(1, 1, 3);//4)harcoded test  
-             Thread.Sleep(500);
-             Debug.WriteLine("6)");
-             ReadLogic(1, 1, 3);//6)harcoded test
-             Thread.Sleep(500);
-             Debug.WriteLine("7)");
-             ReadLogic(4, 1, 3);//7)harcoded test
-             Thread.Sleep(500);
-             Debug.WriteLine("8)");
-             ReadLogic(1, 5, -1);//8)harcoded test
-
-              listServer(3);
-             Write(1, 1, "TESTEA");
-             listServer(3);
-             listGlobal();
+            /*Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
+            TryAttach("http://localhost:8172");//5)
             
-            readScript(script);**/
+
+            listServer(1);*/
+            listServer(1);
+            Write(1, 2, "TESTEC");
+            ReadLogic(1, 1, 1);//1)harcoded test
+            ReadLogic(1, 3, 2);//2)harcoded test
+            Write(1, 1, "TESTEB");
+            ReadLogic(1, 2, 1);//1)harcoded test
+            ReadLogic(1, 1, 2);//2)harcoded test
+            Write(2, 2, "TESTEA");
+            /* ReadLogic(1, 1, -1);//3)harcoded test
+             ReadLogic(1, 1, 3);//4)harcoded test  
+
+             ReadLogic(1, 1, 3);//6)harcoded test
+             ReadLogic(4, 1, 3);//7)harcoded test
+             ReadLogic(1, 5, -1);//8)harcoded test    */
+            //listGlobal();
+            Thread.Sleep(2000);
+            listServer(1);
+
         }
 
 

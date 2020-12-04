@@ -5,12 +5,6 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Protos\GStorePuppetMaster.proto" />
-    <None Remove="Protos\GStoreServerToClient.proto" />
-    <None Remove="Protos\GStoreServerToServer.proto" />
-  </ItemGroup>
-
  
 
   <ItemGroup>
@@ -24,6 +18,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <ProjectReference Include="..\Common\Common.csproj" />
+    <Protobuf Include="Protos\GStoreNodeService.proto" GrpcServices="Server" Access="Internal" />
     <Protobuf Include="Protos\GStorePuppetMaster.proto" GrpcServices="Client" />
     <Protobuf Include="Protos\GStoreServerToClient.proto" GrpcServices="Server" />
     <Protobuf Include="Protos\GStoreServerToServer.proto" GrpcServices="Both" />

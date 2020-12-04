@@ -23,7 +23,7 @@ namespace GStoreServer.Services
 
         private LockAck Lck(LockRequest request)
         {
-            shell.Lock(request.PartitionID, request.ObjectID);
+            shell.Lock(request.PartitionID, request.ObjectID,request.Newvalue);
             LockAck reply = new LockAck
             {
                 Ack = true
@@ -38,7 +38,7 @@ namespace GStoreServer.Services
 
         private UnlockAck Ulck(UnlockRequest request)
         {
-            shell.Unlock(request.PartitionID, request.ObjectID, request.NewValue);
+            shell.Unlock();
             UnlockAck reply = new UnlockAck
             {
                 Ack = true

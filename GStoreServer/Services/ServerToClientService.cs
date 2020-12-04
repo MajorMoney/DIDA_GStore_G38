@@ -36,7 +36,6 @@ namespace GStoreServer.Services
 
         private ReadReply Rdd(ReadRequest request)
         {
-            Debug.WriteLine("TESTOU!");
             string value = shell.GetObjectValue(request.PartitionID,request.ObjectID);
             ReadReply reply = new ReadReply
             {
@@ -52,12 +51,11 @@ namespace GStoreServer.Services
         }
 
         private WriteReply Wrt(WriteRequest request)
-        {
-            bool Ack = shell.Write(request.PartitionID,request.ObjectID,request.Value);
+        {        
+            shell.Write(request.PartitionID,request.ObjectID,request.Value);
             WriteReply reply = new WriteReply
             {
-                ObjID = 1,
-                Value = "teste"
+                Ack = true
             };
             return reply;
         }
