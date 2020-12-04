@@ -29,15 +29,15 @@ namespace Common
             string _type = caller_type.ToString().ToLower();
             if (_type.Contains("client"))
             {
-                pathToDir = @"..\..\..\..\GStoreClient\";
+                pathToDir = @"..\..\..\..\GStoreClient\Scripts\";
             }
             else if (_type.Contains("puppetmaster"))
             {
-                pathToDir = @"..\..\..\..\PuppetMaster\";
+                pathToDir = @"..\..\..\..\PuppetMaster\Scripts\";
             }
             if (_type.Contains("server"))
             {
-                pathToDir = @"..\..\..\..\GStoreServer\";
+                pathToDir = @"..\..\..\..\GStoreServer\Scripts\";
             }
             //Debug.WriteLine(pathToDir);
 
@@ -49,13 +49,13 @@ namespace Common
             //Current runtime directory -> PuppetMaster\bin\Debug\netcoreapp3.1 -> string path1 = Directory.GetCurrentDirectory();
 
 
-            string pathToScript = pathToDir + path; //Go back to \PuppetMaster directory 
+            string pathToScript = pathToDir + @path; //Go back to \PuppetMaster directory 
 
-            Debug.WriteLine("Reading script in " + pathToScript);
+            Debug.WriteLine("Reading script in " + @pathToScript);
 
             try
             {
-                string[] lines = File.ReadAllLines(pathToScript);
+                string[] lines = File.ReadAllLines(@pathToScript);
 
                 for (int num_line = 0; num_line < lines.Length; num_line++)
                 {

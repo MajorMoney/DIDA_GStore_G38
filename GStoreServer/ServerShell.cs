@@ -11,17 +11,7 @@ using System.Threading.Tasks;
 namespace GStoreServer
 {
 
-    //interface para implementar os master servers
-
-
-    /* public class NodeServicer : NodeService.NodeServiceBase//Por criar
-     {
-         public NodeServicer()
-         {
-         }
-     }*/
-
-
+ 
     //Já existe a classe GRPC.Core.Server, a ServerShell serve de 'shell' para 
     //o server implement partition id,server id*(se necessário), entre outras coisas
     public class ServerShell
@@ -51,14 +41,7 @@ namespace GStoreServer
 
 
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="server_url"></param>
-        /// <param name="puppet_hostname"></param>
-        /// <param name="min"></param>
-        /// <param name="max"></param>
+       
         public ServerShell(int id, string server_url, string puppet_hostname, int min, int max)
         {
             AppContext.SetSwitch(
@@ -72,28 +55,18 @@ namespace GStoreServer
             serverUrls = new Dictionary<int, string>();
             this.puppet_hostname = puppet_hostname;
             gatekeeper = new AutoResetEvent(false);
-            //frozen = new ManualResetEventSlim(false);
             writeRequests = new ConcurrentQueue<Task>();
             readRequests = new ConcurrentQueue<Task>();
             isFrozen = false;
 
-            //StartServerService(); 
-            //
-            //Thread.CurrentThread.Name = "MAIN";
+          
             Thread starter = new Thread(new ThreadStart(StartServerService));
             starter.Name = "Starter";
             starter.IsBackground = true;
-            Thread setter = new Thread(new ThreadStart(Setup));
-            setter.Name = "Setter";
-            setter.IsBackground = true;
-            Thread tester = new Thread(new ThreadStart(Test));
-            tester.Name = "Tester";
-            tester.IsBackground = true;
+            
+            
             starter.Start();
-            //setter.Start();
-            tester.Start();
-            //Debug.WriteLine("Tester Started");
-
+           
 
 
 
@@ -103,10 +76,6 @@ namespace GStoreServer
         //#############-----Begin SetUp/Start Block Functions/Methods-----#############//
 
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
         public bool Setuper()
         {
             Setup();
@@ -114,21 +83,15 @@ namespace GStoreServer
             return true;
         }
 
-        //setup gets the system topology
-        /// <summary>
-        /// 
-        /// </summary>
+       
         private async void Setup()
         {
-            //Debug.WriteLine(Thread.CurrentThread.Name +" is going to sleep");
-            //Debug.WriteLine(Thread.CurrentThread.Name + " just woke up");
             //channel setup
             using var channel = GrpcChannel.ForAddress(puppet_hostname);
             var puppetMasterService = new PuppetMasterService.PuppetMasterServiceClient(channel);
             //Send request
             using var call = puppetMasterService.SetUp(new SetUpRequest() { Ok = true });
             //get response
-            //Debug.WriteLine("Sever:" + this.ID + " has Sent SetUP Request");
             while (await call.ResponseStream.MoveNext())
             {
                 var objects = call.ResponseStream.Current;
@@ -155,13 +118,9 @@ namespace GStoreServer
 
 
         //GetObjects will get the keys and values from the partitions replicated in this server
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="puppetMasterService"></param>
+       
         private void GetObjects(PuppetMasterService.PuppetMasterServiceClient puppetMasterService)
         {
-            //Debug.WriteLine("Sever:" + this.ID + " has Sent GetObjects Request");
             foreach (var p in topologyMap)
             {
                 if (p.Value.Contains(this.ID))
@@ -185,12 +144,9 @@ namespace GStoreServer
             Debug.WriteLine("GetObjects Done");
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
+       
         private void StartServerService()
         {
-            //Debug.WriteLine(Thread.CurrentThread.Name + " started");
             string[] url = hostname.Split("//");
             string[] urlv2 = url[1].Split(':');
             ServerPort sp = new ServerPort(urlv2[0], Int32.Parse(urlv2[1]), ServerCredentials.Insecure);
@@ -215,12 +171,7 @@ namespace GStoreServer
         //#############-----Begin Read Requests handler Block Functions/Methods-----#############//
 
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pID"></param>
-        /// <param name="objID"></param>
-        /// <returns></returns>
+        
         public ReadReply GetObjectValue(int pID, int objID, string clientUrl)
         {
             ReadReply reply = new ReadReply()
@@ -307,13 +258,7 @@ namespace GStoreServer
 
         //#############-----End Read Requests handler Block Functions/Methods-----#############//
         //#############-----Begin Write Requests handler Block Functions/Methods-----#############//
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="partitionID"></param>
-        /// <param name="objectID"></param>
-        /// <param name="value"></param>
-        /// 
+        
         public void Write(int partitionID, int objectID, string value)
         {
 
@@ -330,7 +275,6 @@ namespace GStoreServer
                     finally
                     {
                         Monitor.Exit(writeKey);
-                        //SendWrite(partitionID,objectID/*,clientUrl*/);//é preciso alterar o write também
                         WriteDequeue();
 
                     }
@@ -381,12 +325,7 @@ namespace GStoreServer
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="partitionID"></param>
-        /// <param name="objectID"></param>
-        /// <param name="value"></param>
+     
         public void SendLock(int partitionID, int objectID, string value)
         {
             Thread locker = new Thread(() =>
@@ -405,12 +344,8 @@ namespace GStoreServer
 
                    Monitor.Exit(lockers[partitionID][objectID]);
                }
-               /*catch (Exception e)
-               {
-
-               } */
+            
            });
-            //locker.IsBackground = true;
             locker.Name = "locker";
             locker.Start();
             Parallel.ForEach<string>(serverUrls.Values, (url) =>
@@ -427,12 +362,6 @@ namespace GStoreServer
           });
 
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="partitionID"></param>
-        /// <param name="objectID"></param>
-        /// <param name="newValue"></param>
         public void SendUnlock(int partitionID, int objectID, string newValue)
         {
             Parallel.ForEach<string>(serverUrls.Values, (url) =>
@@ -463,12 +392,7 @@ namespace GStoreServer
         }
 
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pID"></param>
-        /// <param name="objID"></param>
-        /// <param name="newValue"></param>
+   
         public bool Lock(int pID, int objID, string newValue)
         {
             Thread locker1 = new Thread(() =>
@@ -490,16 +414,12 @@ namespace GStoreServer
                    }
                }
            });
-            //locker.IsBackground = true;
             locker1.Start();
             return true;
         }
 
 
 
-        /// <summary>
-        /// 
-        /// </summary>
         public void Unlock()
         {
             gatekeeper.Set();
@@ -527,10 +447,7 @@ namespace GStoreServer
 
 
 
-        public void PuppetShutdown()
-        {
-            // puppet_master_server.ShutdownAsync().Wait();
-        }
+    
 
         public void Crash()
         {
@@ -539,22 +456,9 @@ namespace GStoreServer
 
         static void Main(string[] args)
         {
-            /* var ss = new ServerShell("localhost", 1001);
-             Console.WriteLine("Hello World!");*/
+            
         }
 
-        private void Test()
-        {
-
-            if (this.ID == 1)
-            {
-                /*Debug.WriteLine(Thread.CurrentThread.Name + " is going to sleep");
-                Thread.Sleep(4000);
-                Debug.WriteLine(Thread.CurrentThread.Name + "woke up");
-                SendLock(1, 1);
-                Thread.Sleep(2000);
-                SendUnlock(1, 1, "TESTEA"); */
-            }
-        }
+       
     }
 }
