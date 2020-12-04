@@ -285,10 +285,10 @@ before reading and executing the next command in the script file.*/
             Client(1, "http://localhost:8181", "script");
             Thread.Sleep(10);
             Client(2, "http://localhost:8182", "script");
-            Freeze(1);
-            Client(3, "http://localhost:8182", "script");
+            //Freeze(1);
+            Client(3, "http://localhost:8183", "script");
             Thread.Sleep(3000);
-            Unfreeze(1);
+            //Unfreeze(1);
 
         }
 

@@ -5,6 +5,10 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Protos\GStoreClientToServer.proto" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.13.0" />
@@ -17,6 +21,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <ProjectReference Include="..\Common\Common.csproj" />
+    <Protobuf Include="Protos\GStoreClientToServer.proto" GrpcServices="Server" />
     <Protobuf Include="Protos\GStoreNodeService.proto" GrpcServices="Server" Access="Internal" />
     <Protobuf Include="Protos\GStorePuppetMaster.proto" GrpcServices="Client" />
     <Protobuf Include="Protos\GStoreServerToClient.proto" GrpcServices="Client" />

@@ -36,10 +36,11 @@ namespace GStoreServer.Services
 
         private ReadReply Rdd(ReadRequest request)
         {
-            string value = shell.GetObjectValue(request.PartitionID,request.ObjectID);
-            ReadReply reply = new ReadReply
+            var temp = shell.GetObjectValue(request.PartitionID,request.ObjectID,request.ClientUrl);
+            ReadReply reply = new ReadReply()
             {
-                Value = value
+                 HasValue = temp.HasValue,
+                 Value = temp.Value
             };
             return reply;
         }
