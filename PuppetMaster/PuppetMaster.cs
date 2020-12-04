@@ -172,8 +172,8 @@ all outgoing communications from the server.*/
             ServerShell server = new ServerShell(ID,url,hostname,min_delay,max_delay);
             servers.Add(ID, url);
             Debug.WriteLine("Added server ID:"+ID+"--url--" + url);
-
-
+            
+            
 
 
         }
@@ -268,10 +268,10 @@ before reading and executing the next command in the script file.*/
 
         public void Test()
         {
-            /**logger.WriteLine("amigos");
+            //logger.WriteLine("amigos");
             //logger.close();
-           // readScript(@"Scripts\pm_script1");
-            
+            readScript(@"Scripts\pm_script1");
+            /*
             //methodsToList();
             //readScript(@"Scripts\pm_script1");
             Partition(repFactor,1, new int[] { 1, 2, 3 });
@@ -290,17 +290,47 @@ before reading and executing the next command in the script file.*/
             Thread.Sleep(3000);
             Unfreeze(1);
 
-        }
+*/        }
 
         public void readScript(string path)
         {
+            bool areServerSetup = false;
             List<Tuple<MethodInfo, object[]>> queue = scriptReader.readScript(path);
 
             List<List<Tuple<MethodInfo, object[]>>> z = new List<List<Tuple<MethodInfo, object[]>>>();
             List<Task> tasks = new List<Task>();
+            List<Task> server_tasks = new List<Task>();
+            int num_servers=0;
+            for (int i = 0; i < queue.Count; i++)
+                if (queue[i].Item1.Name.ToLower().Equals("server"))
+                {
+                    num_servers++;
+
+                }
             for (int i=0; i< queue.Count; i++)
             {
-                gui.WriteLine(">>Executing:" + queue[i].Item1.Name + " args: "+ string.Join(" ; ", queue[i].Item2));
+                gui.WriteLine(">>Executing:" + queue[i].Item1.Name + " args: " + string.Join(" ; ", queue[i].Item2));
+
+                if (queue[i].Item1.Name.ToLower().Equals("server"))
+                {
+                    gui.WriteLine("Server started " + num_servers);
+                    Task t = new Task(() => queue[i].Item1.Invoke(this, queue[i].Item2));
+                    server_tasks.Add(t);
+                    tasks.Add(t);
+                    t.Start();
+                    num_servers--;
+                    
+                }
+                else
+                {
+                    waitForServers(server_tasks,areServerSetup);
+                    if(num_servers==0 && !areServerSetup)
+                    {
+                        gui.WriteLine("Server setup " + num_servers);
+
+                        SendServerSetup();
+                        areServerSetup = true;
+                    }
                 if (queue[i].Item1.Name.ToLower().Equals("wait"))
                 {
                     gui.WriteLine("----I am wait--------");
@@ -314,23 +344,45 @@ before reading and executing the next command in the script file.*/
                 }
                 else
                 {
-                    if (queue[i].Item2 == null || queue[i].Item2.Length == 0)
-                    {
-                        Task t = new Task(() => queue[i].Item1.Invoke(this, null));
-                        t.Start();
-                        tasks.Add(t);
+                   
+                        if (queue[i].Item2 == null || queue[i].Item2.Length == 0)
+                        {
+                            gui.WriteLine("Status is going");
+                            //Task t = new Task(() => queue[i].Item1.Invoke(this, null));
+                            Task t = new Task(() => Status());
+                            t.Start();
+                            tasks.Add(t);
+                        }
+                        else
+                        {
+
+                            Task t = new Task(() => queue[i].Item1.Invoke(this, queue[i].Item2));
+
+
+                            t.Start();
+                            tasks.Add(t);
+
+                        }
                     }
-                    else
-                    {
-                        Task t = new Task(() => queue[i].Item1.Invoke(this, queue[i].Item2));
-                        t.Start();
-                        tasks.Add(t);
-                    }
+
+                   
                   
 
                 }
             }
             
+        }
+        private void waitForServers(List<Task> server_tasks, bool areServerSetup)
+        {   if (areServerSetup)
+                return;
+            foreach(Task t in server_tasks)
+            {
+                t.Wait();
+            }
+            gui.WriteLine("All servers finished- resuming execution ");
+            Thread.Sleep(5000);
+            Debug.WriteLine("All servers finished: resuming script execution");
+
         }
 
 
