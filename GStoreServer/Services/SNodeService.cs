@@ -66,9 +66,10 @@ namespace GStoreServer.Services
 
         private CrashReply Crsh(CrashRequest request)
         {
+            shell.Crash();
             CrashReply reply = new CrashReply
             {
-                //Ack = shell.Setuper()
+                Ack = true
             };
             return reply;
         }

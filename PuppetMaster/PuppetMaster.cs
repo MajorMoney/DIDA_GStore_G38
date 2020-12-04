@@ -226,7 +226,12 @@ PuppetMaster.*/
 
         public async void Crash(int server_id)// This command is used to force a process to crash.
         {
-
+            var url = servers[server_id];
+            using var channel = GrpcChannel.ForAddress(url);
+            var serverNodeService = new NodeServerService.NodeServerServiceClient(channel);
+            var reply = serverNodeService.Crash(new CrashRequest { Check = true });
+            channel.Dispose();
+            Debug.WriteLine(server_id + " Crashed");
         }
 
         /*This command is used to simulate a delay in the process. After
@@ -286,9 +291,10 @@ before reading and executing the next command in the script file.*/
             Thread.Sleep(10);
             Client(2, "http://localhost:8182", "script");
             Freeze(1);
-            Client(3, "http://localhost:8182", "script");
+            //Client(3, "http://localhost:8183", "script");
             Thread.Sleep(3000);
             Unfreeze(1);
+            Crash(1);
 
 */        }
 
