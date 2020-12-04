@@ -272,31 +272,7 @@ before reading and executing the next command in the script file.*/
 
 
         public void Test()
-        {
-            //logger.WriteLine("amigos");
-            //logger.close();
-            readScript(@"Scripts\pm_script1");
-            /*
-            //methodsToList();
-            //readScript(@"Scripts\pm_script1");
-            Partition(repFactor,1, new int[] { 1, 2, 3 });
-            Partition(repFactor,2, new int[] { 1, 2, 3 });            
-            Server(1, "http://localhost:8171", 1000, 3000);
-            Server(2, "http://localhost:8172", 1000, 3000);
-            Server(3, "http://localhost:8173", 1000, 3000);
-            Thread.Sleep(500);
-            SendServerSetup();
-            Thread.Sleep(500);
-            Client(1, "http://localhost:8181", "script");
-            Thread.Sleep(10);
-            Client(2, "http://localhost:8182", "script");
-            Freeze(1);
-            //Client(3, "http://localhost:8183", "script");
-            Thread.Sleep(3000);
-            Unfreeze(1);
-            Crash(1);
-
-*/        }
+        {       }
 
         public void readScript(string path)
         {
@@ -386,7 +362,7 @@ before reading and executing the next command in the script file.*/
                 t.Wait();
             }
             gui.WriteLine("All servers finished- resuming execution ");
-            Thread.Sleep(5000);
+            
             Debug.WriteLine("All servers finished: resuming script execution");
 
         }

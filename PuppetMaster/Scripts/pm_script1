@@ -1,6 +1,6 @@
 ReplicationFactor 3
-Partition 3 p1 s1 s2 s3
-Partition 3 p2 s2 s4 s5
+Partition 5 p1 s1 s2 s3 s4 s5
+Partition 4 p2 s2 s4 s5 s3 s1
 Server s1 http://localhost:2001 0 0
 Server s2 http://localhost:2002 0 0
 Server s3 http://localhost:2003 0 0	

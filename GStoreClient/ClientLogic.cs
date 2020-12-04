@@ -15,20 +15,7 @@ using System.Threading.Tasks;
 namespace GStoreClient
 {
 
-    /* public class ClientServicer : ClientService.ClientServiceBase
-     {
-         public ClientServicer()
-         {
-
-         }
-     }
-     public class NodeServicer : NodeService.NodeServiceBase
-     {
-         public NodeServicer()
-         {
-
-         }
-     }*/
+   
 
     public class ClientLogic
     {
@@ -44,7 +31,6 @@ namespace GStoreClient
         private ScriptReader scriptReader;
         private Log logger;
         private string script;
-        //private readonly AttachServerService.AttachServerServiceClient client;
         private string attachedServerUrl;
         private GrpcChannel attachedServerChannel;
 
@@ -77,7 +63,6 @@ namespace GStoreClient
 
         private void StartClientNodeService()
         {
-            //Debug.WriteLine(Thread.CurrentThread.Name + " started");
             string[] url = hostname.Split("//");
             string[] urlv2 = url[1].Split(':');
             ServerPort sp = new ServerPort(urlv2[0], Int32.Parse(urlv2[1]), ServerCredentials.Insecure);
@@ -89,14 +74,13 @@ namespace GStoreClient
             Debug.WriteLine("host-   " + sp.Host + "  Port-  " + sp.Port);
             server.Start();
             Debug.WriteLine("Client" + this.ID + "-->serving on adress:");
-            //while (true) ;
         }
 
 
         //setup gets the system topology
         public async void setup()
         {
-            Thread.Sleep(500);//mudar eventualmente
+           
             //channel setup
             var channel = GrpcChannel.ForAddress(puppet_hostname);
             var puppetMasterService = new PuppetMasterService.PuppetMasterServiceClient(channel);
@@ -129,37 +113,9 @@ namespace GStoreClient
                     }
                 }
             }
-            /*Debug.WriteLine("Client:" + this.ID + "TEST1");
-            foreach (var p in objectsMap) //print for testing serves
-            {
-                Debug.WriteLine("Client:" + this.ID + "TEST2");
-                Debug.WriteLine("Client:" + this.ID + "-Partition ID:" + p.Key);
-                foreach (var a in p.Value)
-                {
-                    Debug.WriteLine("Client:" + this.ID + " Object ID:" + a );
-                }
-            }*/
 
 
-            /*Debug.WriteLine("Client:" + this.ID + " Got its topologyMap");
-            TryAttach("http://localhost:8172");//5)
-            
-
-            listServer(1);*/
-
-            //listServer(1); liste«server está com problemas
-            Write(3, 2, "TESTEC");
-
-            ReadLogic(1, 1, -1);//3)harcoded test
-            ReadLogic(1, 1, 3);//4)harcoded test 
-            ReadLogic(2, 1, 3);//6)harcoded test
-            Write(2, 3, "TESTE");
-            ReadLogic(2, 1, 3);//6)harcoded test
-            ReadLogic(3, 1, 3);//6)harcoded test
-
-            //listGlobal();
-            Thread.Sleep(5000);
-            listServer(this.ID);
+            readScript(script); 
 
         }
 
@@ -169,6 +125,7 @@ namespace GStoreClient
         {
             var temp = new int[topologyMap[partitionID].Count];
             topologyMap[partitionID].CopyTo(temp);
+            Debug.WriteLine(string.Join(";",topologyMap[partitionID]));
             TryAttach(serverUrls[temp[0]]);
         }
 
@@ -213,35 +170,13 @@ namespace GStoreClient
             channel.ShutdownAsync().Wait();
             Debug.WriteLine("Attach conection with:" + channel.Target + "  was shutdowned sucefully");
         }
-        public void PuppetShutdown()
-        {
-            //puppet_master_server.ShutdownAsync().Wait();
-        }
-
+      
 
         static void Main(string[] args)
         {
 
-            Log x = new Log("oi");
-            for (int i = 0; i != 99; i++)
-                x.WriteLine("coninha");
-             Thread.Sleep(5000);
-             x.close();**/
-            
-            //ScriptReader x = new ScriptReader();
-            //List<Tuple<MethodInfo, object[]>> queue = x.readScript(@"Scripts\client_script1");
-            /**Debug.WriteLine("---------------------------------------------------------------------------------------------------------------");
-            foreach (Tuple<MethodInfo, object[]> kvp in queue)
-            {
-                Debug.WriteLine(string.Format("Key = {0}, Value = {1}", kvp.Item1, string.Join(";", kvp.Item2)));
-            }**/
-            //var ss = new ServerShell("localhost", 1001);
-            //ClientLogic a = new ClientLogic();
-            //a.readScript(@"Scripts\custom_test");
-            //Debug.WriteLine("ola");
-
+           
         }
-        //problema de recursividade,infinite while loop, mudar eventualmente
         private string ReadLogic(int partition_id, int object_id, int server_id)
         {
             string res = null;
@@ -335,7 +270,6 @@ namespace GStoreClient
                 });
                 Debug.WriteLine("-3");
 
-                //implementar resposta
             }
             else
             {
@@ -421,7 +355,7 @@ namespace GStoreClient
 
             Thread.Sleep(x);
             Debug.WriteLine("wait : " + x);
-        }
+
             Thread.Sleep(x);
             Debug.WriteLine("Stopped sleep at: " + DateTime.Now.ToString("G"));
 
@@ -440,15 +374,14 @@ namespace GStoreClient
                 else
                 {
                     queue[i].Item1.Invoke(this, queue[i].Item2);
-                }                   
+                }
             }
-            }
+        }
 
-    }
+    } }
 
 
 
-}
 
 
 
