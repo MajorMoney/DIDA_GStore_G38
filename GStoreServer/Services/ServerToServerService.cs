@@ -23,11 +23,11 @@ namespace GStoreServer.Services
 
         private LockAck Lck(LockRequest request)
         {
-            shell.Lock(request.PartitionID, request.ObjectID,request.Newvalue);
+            
             LockAck reply = new LockAck
             {
-                Ack = true
-            };
+                Ack = shell.Lock(request.PartitionID, request.ObjectID, request.Newvalue)
+        };
             return reply;
         }
 

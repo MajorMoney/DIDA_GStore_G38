@@ -66,7 +66,11 @@ namespace GStoreClient
 
             //
             Thread setter = new Thread(new ThreadStart(setup));
+            Thread starter = new Thread(new ThreadStart(StartClientNodeService));
+            setter.IsBackground=true;
+            starter.IsBackground = true;
             setter.Start();
+            starter.Start();
         }
 
         private void StartClientNodeService()
@@ -80,9 +84,9 @@ namespace GStoreClient
                 Services ={ NodeClientService.BindService(new CNodeService(this))},
                 Ports = { sp }
             };
+            Debug.WriteLine("host-   " + sp.Host + "  Port-  " + sp.Port);
             server.Start();
             Debug.WriteLine("Client" + this.ID + "-->serving on adress:");
-            Debug.WriteLine("host-   " + sp.Host + "  Port-  " + sp.Port);
             //while (true) ;
         }
 
@@ -140,23 +144,23 @@ namespace GStoreClient
             
 
             listServer(1);*/
-            listServer(1);
-            Write(1, 2, "TESTEC");
+
+            //listServer(1); liste«server está com problemas
             ReadLogic(1, 1, 1);//1)harcoded test
             ReadLogic(1, 3, 2);//2)harcoded test
-            Write(1, 1, "TESTEB");
-            ReadLogic(1, 2, 1);//1)harcoded test
-            ReadLogic(1, 1, 2);//2)harcoded test
-            Write(2, 2, "TESTEA");
-            /* ReadLogic(1, 1, -1);//3)harcoded test
-             ReadLogic(1, 1, 3);//4)harcoded test  
+            Thread.Sleep(2000);
+            Write(1, 2, "TESTEC");
+            Write(3, 2, "TESTEC");
 
-             ReadLogic(1, 1, 3);//6)harcoded test
+            ReadLogic(1, 1, -1);//3)harcoded test
+             ReadLogic(1, 1, 3);//4)harcoded test  
+            Write(2, 3, "TESTET");
+            ReadLogic(1, 1, 3);//6)harcoded test
              ReadLogic(4, 1, 3);//7)harcoded test
              ReadLogic(1, 5, -1);//8)harcoded test    */
             //listGlobal();
-            Thread.Sleep(2000);
-            listServer(1);
+         
+            //listServer(1);
 
         }
 
@@ -255,7 +259,7 @@ namespace GStoreClient
                 //attached server has the object
                 if (topologyMap[partition_id].Contains(attachedServerID))
                 {
-                 res=   Read(partition_id, object_id);
+                 res=   Read(partition_id, object_id);///////////////////////////È preciso alterar isto
                 }
                 else if (server_id != -1)
                 {
@@ -292,10 +296,29 @@ namespace GStoreClient
             var reply = attachService.Read(new ReadRequest()
             {
                 PartitionID = partition_id,
-                ObjectID = object_id
+                ObjectID = object_id,
+                ClientUrl=this.hostname
+                
             });
-           return reply.Value;
+            if (reply.HasValue)
+            {
+                Debug.WriteLine(reply.Value);
+                return reply.Value;
+            }
+            Debug.WriteLine("Will wait for the value");
+            return "Will wait for the value";
+        }
 
+        public string ReceiveValue(string value)
+        {
+            Debug.WriteLine(value);
+            return value;
+        }
+
+        public string ReceiveWrite(string value)
+        {
+            Debug.WriteLine(value);
+            return value;
         }
 
         private void Write(int partition_id, int object_id, string value)
@@ -310,7 +333,7 @@ namespace GStoreClient
                     ObjectID = object_id,
                     Value=value
                 });
-
+                Debug.WriteLine("-3");
 
                 //implementar resposta
             }
@@ -392,6 +415,7 @@ namespace GStoreClient
 
         private void wait(int x)
         {
+            Thread.Sleep(x);
             Debug.WriteLine("wait : " + x);
         }
 

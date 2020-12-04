@@ -1,0 +1,17 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "GStoreClient";
+
+service ClientService{
+	rpc ReadValue (ValueNotification) returns (ValueAck);
+	rpc WriteValue (ValueNotification) returns (ValueAck);
+}
+
+message ValueNotification{
+	string value =1;
+}
+
+message ValueAck{
+	bool ack =1;
+}
+

@@ -18,9 +18,11 @@ message AttachReply {
 message ReadRequest {
   int32 partitionID = 1;
   int32 ObjectID = 2;
+  string clientUrl =3;
 }
 message ReadReply {
-  string value = 1;  
+  bool hasValue = 1;  
+  string value=2;
 }
 
 

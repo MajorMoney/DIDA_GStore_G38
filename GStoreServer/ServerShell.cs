@@ -31,9 +31,10 @@ namespace GStoreServer
         //Server Collections
         private Dictionary<int, List<int>> topologyMap;
         private Dictionary<int, Dictionary<int, string>> objects;
+        private Dictionary<int, Dictionary<int, string>> lockers;
         private Dictionary<int, string> serverUrls;
         private ConcurrentQueue<Task> writeRequests;
-        //private ConcurrentQueue<Task> readRequests;
+        private ConcurrentQueue<Task> readRequests;
         //Server other atributes
         public int ID { get; }
         private string hostname;
@@ -41,7 +42,7 @@ namespace GStoreServer
         private bool isFrozen;
         //for synchro
         private AutoResetEvent gatekeeper;
-        private ManualResetEventSlim frozen;
+        //private ManualResetEventSlim frozen;
         private string writeKey = "dummy";
 
         //private ServerPort port;
@@ -67,12 +68,13 @@ namespace GStoreServer
             hostname = server_url;
             topologyMap = new Dictionary<int, List<int>>();
             objects = new Dictionary<int, Dictionary<int, string>>();
+            lockers = new Dictionary<int, Dictionary<int, string>>();
             serverUrls = new Dictionary<int, string>();
             this.puppet_hostname = puppet_hostname;
             gatekeeper = new AutoResetEvent(false);
-            frozen = new ManualResetEventSlim(false);
+            //frozen = new ManualResetEventSlim(false);
             writeRequests = new ConcurrentQueue<Task>();
-            //readRequests = new ConcurrentQueue<Task>();
+            readRequests = new ConcurrentQueue<Task>();
             isFrozen = false;
 
             //StartServerService(); 
@@ -167,13 +169,16 @@ namespace GStoreServer
                     var call = puppetMasterService.GetObjectsAsync(new PopulateRequest() { PartitionID = p.Key });
                     var reply = call.ResponseAsync.Result;
                     Dictionary<int, string> dic = new Dictionary<int, string>();
+                    Dictionary<int, string> dic2 = new Dictionary<int, string>();
                     lock (this.objects)
                     {
                         foreach (var o in reply.Objectos)
                         {
                             dic.Add(o.Key, o.Value);
+                            dic2.Add(o.Key, " ");
                         }
                         objects.Add(reply.PartitionID, dic);
+                        lockers.Add(reply.PartitionID, dic2);
                     }
                 }
             }
@@ -215,29 +220,74 @@ namespace GStoreServer
         /// <param name="pID"></param>
         /// <param name="objID"></param>
         /// <returns></returns>
-        public string GetObjectValue(int pID, int objID)
+        public ReadReply GetObjectValue(int pID, int objID, string clientUrl)
         {
+            ReadReply reply = new ReadReply()
+            {
+                HasValue = false,
+                Value = "TTTTTT"
+            };
             if (isFrozen)
             {
-                frozen.Wait();
-               
+                ReadEnqueue(pID, objID, clientUrl);
             }
-            string reply;
-            lock (objects[pID][objID])
+            else
             {
-                reply = objects[pID][objID];
+                if (Monitor.TryEnter(lockers[pID][objID]))
+                {
+
+                    try
+                    {
+                        reply.HasValue = true;
+                        reply.Value = objects[pID][objID];
+
+                    }
+                    finally
+                    {
+                        Monitor.Exit(lockers[pID][objID]);
+
+                    }
+                }
+                else
+                {
+                    SendRead(pID, objID, clientUrl);
+                }
             }
             return reply;
-
         }
 
-        /*private void ReadEnqueue(int partitionID, int objectID)
+        private void SendRead(int pID, int objID, string clientUrl)
+        {
+            using var channel = GrpcChannel.ForAddress(clientUrl);
+            var service = new ClientService.ClientServiceClient(channel);
+            lock (lockers[pID][objID])
+            {
+                var reply = service.ReadValue(new ValueNotification()
+                {
+                    Value = objects[pID][objID]
+                });
+            }
+            channel.Dispose();
+        }
+
+        private void ReadEnqueue(int partitionID, int objectID, string clientUrl)
         {
             readRequests.Enqueue(new Task(() =>
             {
-                GetObjectValue(partitionID, objectID);
+                SendRead(partitionID, objectID, clientUrl);//Mudar o metodo
             }));
-        }*/
+        }
+
+        private void ReadDequeue()
+        {
+            if (readRequests.Count != 0)
+            {
+                Task task;
+                readRequests.TryDequeue(out task);
+                task.Start();
+            }
+        }
+
 
 
 
@@ -250,8 +300,9 @@ namespace GStoreServer
         /// <param name="objectID"></param>
         /// <param name="value"></param>
         /// 
-        internal void Write(int partitionID, int objectID, string value)
+        public void Write(int partitionID, int objectID, string value)
         {
+
             if (!isFrozen)
             {
 
@@ -265,13 +316,15 @@ namespace GStoreServer
                     finally
                     {
                         Monitor.Exit(writeKey);
+                        //SendWrite(partitionID,objectID/*,clientUrl*/);//é preciso alterar o write também
                         WriteDequeue();
-                       
+
                     }
                 }
                 else
                 {
                     WriteEnqueue(partitionID, objectID, value);
+                    Debug.WriteLine("Added one");
                 }
             }
             else
@@ -279,6 +332,22 @@ namespace GStoreServer
                 WriteEnqueue(partitionID, objectID, value);
             }
 
+        }
+
+
+        private void SendWrite(int pID, int objID, string clientUrl)
+
+        {
+            using var channel = GrpcChannel.ForAddress(clientUrl);
+            var service = new ClientService.ClientServiceClient(channel);
+            lock (lockers[pID][objID])
+            {
+                var reply = service.WriteValue(new ValueNotification()
+                {
+                    Value = objects[pID][objID]
+                });
+            }
+            channel.Dispose();
         }
 
         private void WriteEnqueue(int partitionID, int objectID, string value)
@@ -291,10 +360,12 @@ namespace GStoreServer
 
         private void WriteDequeue()
         {
-            Task task;
-            writeRequests.TryDequeue(out task);
             if (writeRequests.Count != 0)
+            {
+                Task task;
+                writeRequests.TryDequeue(out task);
                 task.Start();
+            }
         }
 
         /// <summary>
@@ -307,11 +378,27 @@ namespace GStoreServer
         {
             Thread locker = new Thread(() =>
            {
-               Monitor.Enter(objects[partitionID]);
-               gatekeeper.WaitOne();
-               objects[partitionID][objectID] = (string)value;
-               Monitor.Exit(objects[partitionID]);
+
+
+               try
+               {
+                   Monitor.Enter(lockers[partitionID][objectID]);
+                   gatekeeper.WaitOne();
+                   objects[partitionID][objectID] = value;
+
+               }
+               finally
+               {
+
+                   Monitor.Exit(lockers[partitionID][objectID]);
+               }
+               /*catch (Exception e)
+               {
+
+               } */
            });
+            //locker.IsBackground = true;
+            locker.Name = "locker";
             locker.Start();
             Parallel.ForEach<string>(serverUrls.Values, (url) =>
           {
@@ -320,7 +407,7 @@ namespace GStoreServer
                   using var channel = GrpcChannel.ForAddress(url);
                   var serverMasterService = new PartitionMasterService.PartitionMasterServiceClient(channel);
                   var ack = serverMasterService.Lock(new LockRequest { PartitionID = partitionID, ObjectID = objectID, Newvalue = value }
-                  //,                  deadline: DateTime.UtcNow.AddSeconds(10)
+                  , deadline: DateTime.UtcNow.AddSeconds(10)
                   );
                   channel.Dispose();
               }
@@ -341,12 +428,24 @@ namespace GStoreServer
                 {
                     using var channel = GrpcChannel.ForAddress(url);
                     var serverMasterService = new PartitionMasterService.PartitionMasterServiceClient(channel);
-                    var ack = serverMasterService.Unlock(new UnlockRequest { Ok = true }               
-                    //,                    deadline: DateTime.UtcNow.AddSeconds(10)
-                    ) ;
-                    channel.Dispose();
+                    try
+                    {
+
+                        var ack = serverMasterService.Unlock(new UnlockRequest { Ok = true }
+                        , deadline: DateTime.UtcNow.AddSeconds(10)
+                        );
+                    }
+                    catch (Exception e)
+                    {
+                    }
+                    finally
+                    {
+                        channel.Dispose();
+                    }
+
                 }
             });
+
             Unlock();
         }
 
@@ -357,16 +456,30 @@ namespace GStoreServer
         /// <param name="pID"></param>
         /// <param name="objID"></param>
         /// <param name="newValue"></param>
-        public void Lock(int pID, int objID, string newValue)
+        public bool Lock(int pID, int objID, string newValue)
         {
-            Thread locker = new Thread(() =>
+            Thread locker1 = new Thread(() =>
            {
-               Monitor.Enter(objects[pID]);
-               gatekeeper.WaitOne();
-               objects[pID][objID] = newValue;
-               Monitor.Exit(objects[pID]);
+               var a = true;
+               while (a)
+               {
+                   try
+                   {
+                       Monitor.Enter(lockers[pID][objID]);
+                       a = false;
+                       gatekeeper.WaitOne();
+                       objects[pID][objID] = newValue;
+                       Monitor.Exit(lockers[pID][objID]);
+                   }
+                   catch (Exception e)
+                   {
+
+                   }
+               }
            });
-            locker.Start();
+            //locker.IsBackground = true;
+            locker1.Start();
+            return true;
         }
 
 
@@ -384,7 +497,7 @@ namespace GStoreServer
 
         //#############-----Begin PuppetMaster Requests Handlers Block Functions/Methods-----#############//
 
-        public void Freeze() 
+        public void Freeze()
         {
             isFrozen = true;
         }
@@ -392,7 +505,7 @@ namespace GStoreServer
         public void Unfreeze()
         {
             isFrozen = false;
-            frozen.Set();
+            ReadDequeue();
             WriteDequeue();
         }
 

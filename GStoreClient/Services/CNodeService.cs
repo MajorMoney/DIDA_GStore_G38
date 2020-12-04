@@ -23,6 +23,7 @@ namespace GStoreClient.Services
 
         private CAck Ackk(CCheckUp request)
         {
+
             CAck reply = new CAck
             {
                 Ack = true
